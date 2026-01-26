@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MD Calendar - Markdown Editor & Calendar</title>
+  
+  <!-- Neobrutalism Design System -->
+  <link rel="stylesheet" href="css/design-system.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  
+  <!-- Markdown Preview Styles -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+  
+  <!-- Google Fonts for Neobrutalism -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Navigation Header -->
+  <header class="nav-header">
+    <div class="nav-brand">
+      <h1 class="brand-title">MD Calendar</h1>
+    </div>
+    <nav class="nav-menu">
+      <a href="#/editor" class="nav-link" data-route="editor">
+        <span class="nav-icon">&#9998;</span>
+        Editor
+      </a>
+      <a href="#/list" class="nav-link" data-route="list">
+        <span class="nav-icon">&#9776;</span>
+        Documents
+      </a>
+      <a href="#/calendar" class="nav-link" data-route="calendar">
+        <span class="nav-icon">&#128197;</span>
+        Calendar
+      </a>
+    </nav>
+    <div class="nav-actions">
+      <button id="btn-new-doc" class="btn btn-primary">+ New</button>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main id="app-container" class="app-container">
+    <!-- Views will be rendered here -->
+  </main>
+
+  <!-- Toast Notifications -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- External Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+  <!-- Application Modules -->
+  <script type="module" src="js/db.js"></script>
+  <script type="module" src="js/router.js"></script>
+  <script type="module" src="js/components/editor.js"></script>
+  <script type="module" src="js/components/document-list.js"></script>
+  <script type="module" src="js/components/calendar.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

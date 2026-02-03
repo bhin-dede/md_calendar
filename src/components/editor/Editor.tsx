@@ -96,7 +96,7 @@ export function Editor({ documentId }: EditorProps) {
         });
         setCurrentDocId(doc.id);
         setDocument(doc);
-        router.replace(`/editor/${doc.id}`);
+        router.replace(`/editor?id=${doc.id}`);
         showToast('Document created', 'success');
       } catch (error) {
         console.error('Failed to create document:', error);

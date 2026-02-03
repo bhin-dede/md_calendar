@@ -9,7 +9,7 @@ export function Header() {
 
   const isActive = (path: string) => {
     if (path === '/editor') {
-      return pathname === '/editor' || pathname.startsWith('/editor/');
+      return pathname === '/editor';
     }
     return pathname === path;
   };
@@ -40,6 +40,13 @@ export function Header() {
         >
           <span className="nav-icon">&#128197;</span>
           Calendar
+        </Link>
+        <Link
+          href="/settings"
+          className={`nav-link ${isActive('/settings') ? 'active' : ''}`}
+        >
+          <span className="nav-icon">&#9881;</span>
+          Settings
         </Link>
       </nav>
       <div className="nav-actions">

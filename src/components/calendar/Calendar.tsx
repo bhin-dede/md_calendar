@@ -66,7 +66,7 @@ function CalendarDay({ year, month, day, isOtherMonth, docs }: CalendarDayProps)
 
   const handleDocClick = (e: React.MouseEvent, docId: string) => {
     e.stopPropagation();
-    router.push(`/editor/${docId}`);
+    router.push(`/editor?id=${docId}`);
   };
 
   return (

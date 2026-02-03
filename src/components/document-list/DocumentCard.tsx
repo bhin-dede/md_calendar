@@ -48,7 +48,7 @@ interface DocumentCardProps {
 
 export function DocumentCard({ document, onExport, onDelete }: DocumentCardProps) {
   return (
-    <Link href={`/editor/${document.id}`} className="document-card">
+    <Link href={`/editor?id=${document.id}`} className="document-card">
       <div
         className="document-card-color"
         style={{ backgroundColor: getColorForDoc(document.id) }}

@@ -1,18 +1,12 @@
 'use client';
 
-import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 export function Header() {
   const pathname = usePathname();
 
-  const isActive = (path: string) => {
-    if (path === '/editor') {
-      return pathname === '/editor';
-    }
-    return pathname === path;
-  };
+  const isActive = (path: string) => pathname === path;
 
   return (
     <header className="nav-header">
@@ -20,13 +14,6 @@ export function Header() {
         <h1 className="brand-title">MD Calendar</h1>
       </div>
       <nav className="nav-menu">
-        <Link
-          href="/editor"
-          className={`nav-link ${isActive('/editor') ? 'active' : ''}`}
-        >
-          <span className="nav-icon">&#9998;</span>
-          Editor
-        </Link>
         <Link
           href="/list"
           className={`nav-link ${isActive('/list') ? 'active' : ''}`}

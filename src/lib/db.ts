@@ -1,147 +1,54 @@
 import { Document, DocumentInput } from './types';
+import { invoke } from '@tauri-apps/api/core';
 
-const DB_NAME = 'MDCalendarDB';
-const DB_VERSION = 1;
-const STORE_NAME = 'documents';
-
-let dbInstance: IDBDatabase | null = null;
-
-function generateId(): string {
-  return `doc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-}
-
-function promisifyRequest<T>(request: IDBRequest<T>): Promise<T> {
-  return new Promise((resolve, reject) => {
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
-}
-
-async function initDB(): Promise<IDBDatabase> {
-  if (dbInstance) return dbInstance;
-
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => {
-      dbInstance = request.result;
-      resolve(dbInstance);
-    };
-
-    request.onupgradeneeded = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
-
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
-        store.createIndex('date', 'date', { unique: false });
-        store.createIndex('createdAt', 'createdAt', { unique: false });
-        store.createIndex('updatedAt', 'updatedAt', { unique: false });
-        store.createIndex('title', 'title', { unique: false });
-      }
-    };
-  });
-}
-
-async function getDB(): Promise<IDBDatabase> {
-  if (!dbInstance) {
-    await initDB();
-  }
-  return dbInstance!;
+export async function initDB(): Promise<void> {
 }
 
 export async function createDocument(data: DocumentInput = {}): Promise<Document> {
-  const db = await getDB();
   const now = Date.now();
-
-  const doc: Document = {
-    id: generateId(),
+  return invoke<Document>('create_document', {
     title: data.title || 'Untitled',
     content: data.content || '',
     date: data.date || now,
-    createdAt: now,
-    updatedAt: now,
-  };
-
-  const transaction = db.transaction([STORE_NAME], 'readwrite');
-  const store = transaction.objectStore(STORE_NAME);
-
-  await promisifyRequest(store.add(doc));
-  return doc;
+  });
 }
 
 export async function getDocument(id: string): Promise<Document | undefined> {
-  const db = await getDB();
-  const transaction = db.transaction([STORE_NAME], 'readonly');
-  const store = transaction.objectStore(STORE_NAME);
-
-  return promisifyRequest(store.get(id));
+  const result = await invoke<Document | null>('get_document', { id });
+  return result ?? undefined;
 }
 
 export async function updateDocument(id: string, updates: Partial<DocumentInput>): Promise<Document> {
-  const db = await getDB();
-  const transaction = db.transaction([STORE_NAME], 'readwrite');
-  const store = transaction.objectStore(STORE_NAME);
-
-  const doc = await promisifyRequest<Document>(store.get(id));
-  if (!doc) throw new Error(`Document ${id} not found`);
-
-  const updatedDoc: Document = {
-    ...doc,
-    ...updates,
-    id: doc.id,
-    createdAt: doc.createdAt,
-    updatedAt: Date.now(),
-  };
-
-  const putTransaction = db.transaction([STORE_NAME], 'readwrite');
-  const putStore = putTransaction.objectStore(STORE_NAME);
-  await promisifyRequest(putStore.put(updatedDoc));
-
-  return updatedDoc;
+  return invoke<Document>('update_document', {
+    id,
+    title: updates.title ?? null,
+    content: updates.content ?? null,
+    date: updates.date ?? null,
+  });
 }
 
 export async function deleteDocument(id: string): Promise<void> {
-  const db = await getDB();
-  const transaction = db.transaction([STORE_NAME], 'readwrite');
-  const store = transaction.objectStore(STORE_NAME);
-
-  await promisifyRequest(store.delete(id));
+  await invoke<boolean>('delete_document', { id });
 }
 
 export async function getAllDocuments(): Promise<Document[]> {
-  const db = await getDB();
-  const transaction = db.transaction([STORE_NAME], 'readonly');
-  const store = transaction.objectStore(STORE_NAME);
-
-  const docs = await promisifyRequest<Document[]>(store.getAll());
-  return docs.sort((a, b) => b.updatedAt - a.updatedAt);
-}
-
-export async function getDocumentsByDateRange(startDate: number, endDate: number): Promise<Document[]> {
-  const db = await getDB();
-  const transaction = db.transaction([STORE_NAME], 'readonly');
-  const store = transaction.objectStore(STORE_NAME);
-  const index = store.index('date');
-
-  const range = IDBKeyRange.bound(startDate, endDate, false, false);
-  return promisifyRequest(index.getAll(range));
+  return invoke<Document[]>('get_all_documents');
 }
 
 export async function getDocumentsForMonth(year: number, month: number): Promise<Document[]> {
-  const startDate = new Date(year, month, 1).getTime();
-  const endDate = new Date(year, month + 1, 0, 23, 59, 59, 999).getTime();
-  return getDocumentsByDateRange(startDate, endDate);
+  return invoke<Document[]>('get_documents_for_month', { year, month: month + 1 });
 }
 
 export async function searchDocuments(query: string): Promise<Document[]> {
-  const docs = await getAllDocuments();
-  const lowerQuery = query.toLowerCase();
+  return invoke<Document[]>('search_documents', { query });
+}
 
-  return docs.filter(doc =>
-    doc.title.toLowerCase().includes(lowerQuery) ||
-    doc.content.toLowerCase().includes(lowerQuery)
-  );
+export async function getDocumentsFolder(): Promise<string | null> {
+  return invoke<string | null>('get_documents_folder');
+}
+
+export async function setDocumentsFolder(folder: string): Promise<void> {
+  await invoke<void>('set_documents_folder', { folder });
 }
 
 export function formatDate(timestamp: number): string {
@@ -168,5 +75,3 @@ export function getDateKey(timestamp: number): string {
   const date = new Date(timestamp);
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
-
-export { initDB };

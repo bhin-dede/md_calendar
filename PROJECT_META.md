@@ -245,7 +245,7 @@ uuid = { version = "1.0", features = ["v4"] }
 
 ### 8.1 개발 모드 실행
 ```bash
-cd /home/choi/demo/md_calendar
+cd md_calendar
 npm install
 npm run tauri:dev
 ```

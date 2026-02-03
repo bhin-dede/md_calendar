@@ -10,7 +10,7 @@
 
 ```bash
 # AppImage 실행 (Linux)
-cd /home/choi/demo/md_calendar
+cd md_calendar
 ./src-tauri/target/release/bundle/appimage/MD\ Calendar_0.1.0_amd64.AppImage
 ```
 
@@ -18,7 +18,7 @@ cd /home/choi/demo/md_calendar
 
 ```bash
 # 프로젝트 디렉토리로 이동
-cd /home/choi/demo/md_calendar
+cd md_calendar
 
 # 의존성 설치 (최초 1회)
 npm install
@@ -66,7 +66,7 @@ sudo apt-get install libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev patchelf
 새 세션에서 아래 프롬프트를 사용하세요:
 
 ```
-/home/choi/demo/md_calendar 프로젝트의 고도화 작업을 진행합니다.
+md_calendar 프로젝트의 고도화 작업을 진행합니다.
 
 먼저 PROJECT_META.md 파일을 읽고 프로젝트 컨텍스트를 파악한 후,
 [원하는 작업 내용]을 진행해주세요.
@@ -79,7 +79,7 @@ sudo apt-get install libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev patchelf
 ```
 ulw ulw
 
-/home/choi/demo/md_calendar 프로젝트 고도화.
+md_calendar 프로젝트 고도화.
 
 1. PROJECT_META.md 읽고 컨텍스트 파악
 2. [원하는 작업 내용]
@@ -94,7 +94,7 @@ ulw ulw
 ### 3.1 새 기능 추가
 
 ```
-/home/choi/demo/md_calendar 프로젝트에 태그 시스템을 추가해줘.
+md_calendar 프로젝트에 태그 시스템을 추가해줘.
 
 PROJECT_META.md를 먼저 읽고:
 - 문서에 태그 추가/삭제 기능
@@ -108,7 +108,7 @@ Rust 백엔드도 필요하면 수정해줘.
 ### 3.2 버그 수정
 
 ```
-/home/choi/demo/md_calendar 프로젝트의 버그를 수정해줘.
+md_calendar 프로젝트의 버그를 수정해줘.
 
 PROJECT_META.md를 확인하고,
 [특정 버그 설명] 문제를 해결해줘.
@@ -117,7 +117,7 @@ PROJECT_META.md를 확인하고,
 ### 3.3 UI/UX 개선
 
 ```
-/home/choi/demo/md_calendar 프로젝트에 다크 모드를 추가해줘.
+md_calendar 프로젝트에 다크 모드를 추가해줘.
 
 PROJECT_META.md를 읽고 기존 디자인 시스템(네오브루탈리즘)을 
 유지하면서 다크 테마 CSS 변수와 토글 기능을 구현해줘.
@@ -326,7 +326,7 @@ rm ~/.local/share/com.mdcalendar.app/config.json
 ```
 ulw ulw
 
-/home/choi/demo/md_calendar 프로젝트 고도화 작업.
+md_calendar 프로젝트 고도화 작업.
 
 ## 컨텍스트
 - PROJECT_META.md 파일 참조

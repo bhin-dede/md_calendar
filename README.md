@@ -20,19 +20,45 @@
 - **Neobrutalism UI** - 모던하고 독특한 디자인
 - **Desktop App** - Tauri 기반 크로스 플랫폼 데스크톱 앱
 
-## Quick Start
+## Download
 
-### 실행 파일 사용 (권장)
+### Linux (AppImage)
+
+[![Download AppImage](https://img.shields.io/badge/Download-AppImage-blue?style=for-the-badge&logo=linux)](https://github.com/bhin-dede/md_calendar/releases/latest/download/MD.Calendar_0.1.0_amd64.AppImage)
+
+**[MD Calendar_0.1.0_amd64.AppImage](https://github.com/bhin-dede/md_calendar/releases/latest/download/MD.Calendar_0.1.0_amd64.AppImage)** (77MB)
+
+### 실행 조건
+
+| 조건 | 설명 |
+|------|------|
+| OS | Linux (x86_64) |
+| 필수 라이브러리 | libwebkit2gtk-4.1-0 |
 
 ```bash
-# AppImage 실행 (Linux)
-./src-tauri/target/release/bundle/appimage/MD\ Calendar_0.1.0_amd64.AppImage
+# Ubuntu/Debian - 필수 라이브러리 설치
+sudo apt install libwebkit2gtk-4.1-0
 
-# 또는 .deb 설치 (Debian/Ubuntu)
-sudo dpkg -i src-tauri/target/release/bundle/deb/MD\ Calendar_0.1.0_amd64.deb
+# Fedora
+sudo dnf install webkit2gtk4.1
+
+# Arch Linux
+sudo pacman -S webkit2gtk-4.1
 ```
 
-### 개발 모드
+### 설치 및 실행
+
+```bash
+# 1. 다운로드 후 실행 권한 부여
+chmod +x MD\ Calendar_0.1.0_amd64.AppImage
+
+# 2. 실행
+./MD\ Calendar_0.1.0_amd64.AppImage
+```
+
+> **Tip**: `~/Applications` 폴더에 복사하면 앱 런처에서도 찾을 수 있습니다.
+
+## Quick Start (개발자용)
 
 ```bash
 # 1. Clone
@@ -161,13 +187,21 @@ npm run lint         # Run ESLint
 
 ## System Requirements
 
-### Linux
-- libwebkit2gtk-4.1
-- libgtk-3
-- librsvg2
+### 실행만 할 경우 (AppImage)
 
 ```bash
-sudo apt-get install libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev
+# Ubuntu/Debian
+sudo apt install libwebkit2gtk-4.1-0
+```
+
+### 개발/빌드할 경우
+
+```bash
+# Ubuntu/Debian
+sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev
+
+# Rust 툴체인 필요
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
 ## Documentation

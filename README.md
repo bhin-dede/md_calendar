@@ -1,22 +1,38 @@
 # MD Calendar
 
-> 웹 기반 마크다운 에디터 & 캘린더 애플리케이션
+> 데스크톱 마크다운 에디터 & 캘린더 애플리케이션
 
-![Next.js](https://img.shields.io/badge/Next.js-14+-black)
+![Tauri](https://img.shields.io/badge/Tauri-2.x-blue)
+![Next.js](https://img.shields.io/badge/Next.js-16+-black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)
 ![Design](https://img.shields.io/badge/Design-Neobrutalism-FF6B6B)
-![Storage](https://img.shields.io/badge/Storage-IndexedDB-4ECDC4)
+![Storage](https://img.shields.io/badge/Storage-Local%20Files-4ECDC4)
 
 ## Features
 
 - **Split Editor** - 좌측 마크다운 에디터, 우측 실시간 프리뷰
 - **Auto Save** - 2초 디바운스 자동 저장
+- **Local File Storage** - 로컬 폴더에 .md 파일로 저장
+- **Custom Folder** - 저장 폴더 직접 지정 가능
 - **Import/Export** - .md 파일 가져오기/내보내기
 - **Document List** - 문서 목록 관리 및 검색
 - **Calendar View** - 날짜별 문서 시각화
 - **Neobrutalism UI** - 모던하고 독특한 디자인
+- **Desktop App** - Tauri 기반 크로스 플랫폼 데스크톱 앱
 
 ## Quick Start
+
+### 실행 파일 사용 (권장)
+
+```bash
+# AppImage 실행 (Linux)
+./src-tauri/target/release/bundle/appimage/MD\ Calendar_0.1.0_amd64.AppImage
+
+# 또는 .deb 설치 (Debian/Ubuntu)
+sudo dpkg -i src-tauri/target/release/bundle/deb/MD\ Calendar_0.1.0_amd64.deb
+```
+
+### 개발 모드
 
 ```bash
 # 1. Clone
@@ -26,21 +42,25 @@ cd md_calendar
 # 2. Install dependencies
 npm install
 
-# 3. Run development server
-npm run dev
+# 3. Run Tauri dev mode
+npm run tauri:dev
+```
 
-# 4. Open browser
-open http://localhost:3000
+### 프로덕션 빌드
+
+```bash
+npm run tauri:build
 ```
 
 ## Tech Stack
 
 | Category | Technology |
 |----------|------------|
-| Framework | Next.js 14+ (App Router) |
-| Language | TypeScript |
+| Desktop Framework | Tauri 2.x (Rust) |
+| Frontend | Next.js 16+ (App Router) |
+| Language | TypeScript + Rust |
 | Styling | CSS (Neobrutalism Design System) |
-| Storage | IndexedDB |
+| Storage | Local File System (.md files) |
 | Markdown | [marked](https://marked.js.org/) |
 | Syntax Highlight | [highlight.js](https://highlightjs.org/) |
 | XSS Protection | [DOMPurify](https://github.com/cure53/DOMPurify) |
@@ -54,20 +74,20 @@ md_calendar/
 │   ├── app/                    # Next.js App Router
 │   │   ├── layout.tsx          # Root layout
 │   │   ├── page.tsx            # Home (redirect)
-│   │   ├── editor/             # Editor pages
+│   │   ├── editor/             # Editor page
 │   │   ├── list/               # Document list page
-│   │   └── calendar/           # Calendar page
+│   │   ├── calendar/           # Calendar page
+│   │   └── settings/           # Settings page
 │   ├── components/             # React components
-│   │   ├── Header.tsx
-│   │   ├── Modal.tsx
-│   │   ├── editor/
-│   │   ├── document-list/
-│   │   └── calendar/
 │   ├── context/                # React Context
 │   ├── hooks/                  # Custom hooks
-│   ├── lib/                    # Utilities & DB
+│   ├── lib/                    # Utilities & Tauri API
 │   └── styles/                 # CSS files
-├── public/                     # Static assets
+├── src-tauri/
+│   ├── src/lib.rs              # Rust backend (file operations)
+│   ├── Cargo.toml              # Rust dependencies
+│   ├── tauri.conf.json         # Tauri configuration
+│   └── capabilities/           # Tauri permissions
 ├── package.json
 └── tsconfig.json
 ```
@@ -77,9 +97,25 @@ md_calendar/
 | Route | Description |
 |-------|-------------|
 | `/editor` | New document editor |
-| `/editor/[id]` | Edit existing document |
+| `/editor?id=xxx` | Edit existing document |
 | `/list` | Document list |
 | `/calendar` | Calendar view |
+| `/settings` | App settings (folder selection) |
+
+## File Storage
+
+문서는 로컬 파일 시스템에 저장됩니다:
+
+```
+저장폴더/
+├── doc_1234567890_abc12.md         # 마크다운 내용
+├── doc_1234567890_abc12.meta.json  # 메타데이터
+└── ...
+```
+
+### 기본 저장 위치
+- Linux: `~/.local/share/com.mdcalendar.app/documents/`
+- Settings에서 원하는 폴더로 변경 가능
 
 ## Data Model
 
@@ -116,18 +152,23 @@ interface Document {
 ## Scripts
 
 ```bash
-npm run dev      # Start development server
-npm run build    # Build for production
-npm start        # Start production server
-npm run lint     # Run ESLint
+npm run dev          # Start Next.js dev server
+npm run build        # Build Next.js for production
+npm run tauri:dev    # Run Tauri in development mode
+npm run tauri:build  # Build Tauri desktop app
+npm run lint         # Run ESLint
 ```
 
-## Browser Support
+## System Requirements
 
-- Chrome 80+
-- Firefox 75+
-- Safari 13+
-- Edge 80+
+### Linux
+- libwebkit2gtk-4.1
+- libgtk-3
+- librsvg2
+
+```bash
+sudo apt-get install libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev
+```
 
 ## Documentation
 
@@ -136,11 +177,13 @@ npm run lint     # Run ESLint
 
 ## Roadmap
 
+- [x] Tauri desktop app
+- [x] Local file storage
+- [x] Custom folder selection
 - [ ] Tag system
 - [ ] Dark mode
 - [ ] Keyboard shortcuts
 - [ ] Drag & drop import
-- [ ] PWA support
 - [ ] Cloud sync
 - [ ] Version history
 - [ ] Mermaid diagrams
@@ -160,4 +203,4 @@ MIT License
 
 ---
 
-Made with Next.js + Neobrutalism
+Made with Tauri + Next.js + Neobrutalism

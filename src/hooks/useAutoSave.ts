@@ -8,7 +8,7 @@ interface UseAutoSaveOptions {
   documentId: string | null;
   delay?: number;
   onSaveStart?: () => void;
-  onSaveSuccess?: () => void;
+  onSaveSuccess?: (newId: string) => void;
   onSaveError?: (error: Error) => void;
 }
 
@@ -32,8 +32,8 @@ export function useAutoSave({
       timeoutRef.current = setTimeout(async () => {
         onSaveStart?.();
         try {
-          await updateDocument(documentId, data);
-          onSaveSuccess?.();
+          const updatedDoc = await updateDocument(documentId, data);
+          onSaveSuccess?.(updatedDoc.id);
         } catch (error) {
           onSaveError?.(error as Error);
         }

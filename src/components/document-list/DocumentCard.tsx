@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Document } from '@/lib/types';
+import { Document, STATUS_LABELS, STATUS_COLORS } from '@/lib/types';
 import { formatDateTime } from '@/lib/db';
 
 const COLORS = [
@@ -54,8 +54,18 @@ export function DocumentCard({ document, onExport, onDelete }: DocumentCardProps
         style={{ backgroundColor: getColorForDoc(document.id) }}
       />
       <div className="document-card-content">
-        <div className="document-card-title">
-          {document.title || 'Untitled'}
+        <div className="document-card-header">
+          <div className="document-card-title">
+            {document.title || 'Untitled'}
+          </div>
+          {document.status && document.status !== 'none' && (
+            <span
+              className="status-badge"
+              style={{ backgroundColor: STATUS_COLORS[document.status] }}
+            >
+              {STATUS_LABELS[document.status]}
+            </span>
+          )}
         </div>
         <div className="document-card-preview">
           {getContentPreview(document.content) || 'No content'}

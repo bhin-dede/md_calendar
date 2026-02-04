@@ -61,6 +61,19 @@
   gap: var(--space-sm);
 }
 
+.settings-icon {
+  font-size: 1.5rem;
+  color: var(--color-text);
+  text-decoration: none;
+  padding: var(--space-xs);
+  border-radius: var(--radius-sm);
+  transition: transform 0.2s;
+}
+
+.settings-icon:hover {
+  transform: rotate(45deg);
+}
+
 .app-container {
   padding: var(--space-lg);
   max-width: 1600px;

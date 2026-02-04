@@ -3,12 +3,72 @@ use std::fs;
 use std::path::PathBuf;
 use tauri::Manager;
 
+fn sanitize_filename(title: &str) -> String {
+    let sanitized: String = title
+        .chars()
+        .map(|c| match c {
+            '/' | '\\' | ':' | '*' | '?' | '"' | '<' | '>' | '|' | '\0' | ' ' => '_',
+            _ => c,
+        })
+        .collect();
+
+    let trimmed = sanitized.trim_matches('_');
+    let mut result = String::new();
+    let mut prev_underscore = false;
+
+    for c in trimmed.chars() {
+        if c == '_' {
+            if !prev_underscore {
+                result.push(c);
+            }
+            prev_underscore = true;
+        } else {
+            result.push(c);
+            prev_underscore = false;
+        }
+    }
+
+    if result.is_empty() {
+        return "Untitled".to_string();
+    }
+
+    if result.len() > 100 {
+        result.truncate(100);
+        result = result.trim_end_matches('_').to_string();
+    }
+
+    result
+}
+
+fn generate_unique_filename(docs_dir: &PathBuf, base_name: &str) -> String {
+    let md_path = docs_dir.join(format!("{}.md", base_name));
+
+    if !md_path.exists() {
+        return base_name.to_string();
+    }
+
+    let mut counter = 1;
+    loop {
+        let candidate = format!("{}_{}", base_name, counter);
+        let candidate_path = docs_dir.join(format!("{}.md", candidate));
+        if !candidate_path.exists() {
+            return candidate;
+        }
+        counter += 1;
+        if counter > 1000 {
+            let now = chrono::Utc::now().timestamp_millis();
+            return format!("{}_{}", base_name, now);
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Document {
     pub id: String,
     pub title: String,
     pub content: String,
     pub date: i64,
+    pub status: String,
     #[serde(rename = "createdAt")]
     pub created_at: i64,
     #[serde(rename = "updatedAt")]
@@ -19,10 +79,16 @@ pub struct Document {
 pub struct DocumentMeta {
     pub title: String,
     pub date: i64,
+    #[serde(default = "default_status")]
+    pub status: String,
     #[serde(rename = "createdAt")]
     pub created_at: i64,
     #[serde(rename = "updatedAt")]
     pub updated_at: i64,
+}
+
+fn default_status() -> String {
+    "none".to_string()
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -105,19 +171,21 @@ fn create_document(
     title: String,
     content: String,
     date: i64,
+    status: Option<String>,
 ) -> Result<Document, String> {
     let now = chrono::Utc::now().timestamp_millis();
-    let id = format!(
-        "doc_{}_{}",
-        now,
-        uuid::Uuid::new_v4().to_string().split('-').next().unwrap()
-    );
+    let docs_dir = get_documents_dir(&app)?;
+    let doc_status = status.unwrap_or_else(|| "none".to_string());
+
+    let base_name = sanitize_filename(&title);
+    let id = generate_unique_filename(&docs_dir, &base_name);
 
     let doc = Document {
         id: id.clone(),
         title: title.clone(),
         content: content.clone(),
         date,
+        status: doc_status.clone(),
         created_at: now,
         updated_at: now,
     };
@@ -130,6 +198,7 @@ fn create_document(
     let meta = DocumentMeta {
         title,
         date,
+        status: doc_status,
         created_at: now,
         updated_at: now,
     };
@@ -157,6 +226,7 @@ fn get_document(app: tauri::AppHandle, id: String) -> Result<Option<Document>, S
         title: meta.title,
         content,
         date: meta.date,
+        status: meta.status,
         created_at: meta.created_at,
         updated_at: meta.updated_at,
     }))
@@ -169,6 +239,7 @@ fn update_document(
     title: Option<String>,
     content: Option<String>,
     date: Option<i64>,
+    status: Option<String>,
 ) -> Result<Document, String> {
     let doc_path = get_document_path(&app, &id)?;
     let meta_path = get_meta_path(&app, &id)?;
@@ -182,26 +253,56 @@ fn update_document(
     let mut meta: DocumentMeta = serde_json::from_str(&meta_json).map_err(|e| e.to_string())?;
 
     let now = chrono::Utc::now().timestamp_millis();
-
     let new_content = content.unwrap_or(current_content);
-    if let Some(t) = title {
-        meta.title = t;
-    }
+
+    let title_changed = title.as_ref().map_or(false, |t| t != &meta.title);
+    let new_title = title.unwrap_or_else(|| meta.title.clone());
+
     if let Some(d) = date {
         meta.date = d;
     }
+    if let Some(s) = status {
+        meta.status = s;
+    }
+    meta.title = new_title.clone();
     meta.updated_at = now;
 
-    fs::write(&doc_path, &new_content).map_err(|e| e.to_string())?;
+    let new_id = if title_changed {
+        let docs_dir = get_documents_dir(&app)?;
+        let base_name = sanitize_filename(&new_title);
 
-    let meta_json = serde_json::to_string_pretty(&meta).map_err(|e| e.to_string())?;
-    fs::write(&meta_path, meta_json).map_err(|e| e.to_string())?;
+        if base_name != id {
+            let new_id = generate_unique_filename(&docs_dir, &base_name);
+            let new_doc_path = docs_dir.join(format!("{}.md", new_id));
+            let new_meta_path = docs_dir.join(format!("{}.meta.json", new_id));
+
+            fs::write(&new_doc_path, &new_content).map_err(|e| e.to_string())?;
+            let meta_json = serde_json::to_string_pretty(&meta).map_err(|e| e.to_string())?;
+            fs::write(&new_meta_path, meta_json).map_err(|e| e.to_string())?;
+
+            fs::remove_file(&doc_path).ok();
+            fs::remove_file(&meta_path).ok();
+
+            new_id
+        } else {
+            fs::write(&doc_path, &new_content).map_err(|e| e.to_string())?;
+            let meta_json = serde_json::to_string_pretty(&meta).map_err(|e| e.to_string())?;
+            fs::write(&meta_path, meta_json).map_err(|e| e.to_string())?;
+            id
+        }
+    } else {
+        fs::write(&doc_path, &new_content).map_err(|e| e.to_string())?;
+        let meta_json = serde_json::to_string_pretty(&meta).map_err(|e| e.to_string())?;
+        fs::write(&meta_path, meta_json).map_err(|e| e.to_string())?;
+        id
+    };
 
     Ok(Document {
-        id,
+        id: new_id,
         title: meta.title,
         content: new_content,
         date: meta.date,
+        status: meta.status,
         created_at: meta.created_at,
         updated_at: meta.updated_at,
     })

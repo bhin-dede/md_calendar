@@ -28,16 +28,9 @@ export function Header() {
           <span className="nav-icon">&#128197;</span>
           Calendar
         </Link>
-        <Link
-          href="/settings"
-          className={`nav-link ${isActive('/settings') ? 'active' : ''}`}
-        >
-          <span className="nav-icon">&#9881;</span>
-          Settings
-        </Link>
       </nav>
       <div className="nav-actions">
-        <Link href="/editor" className="btn btn-primary">+ New</Link>
+        <Link href="/settings" className="settings-icon" title="Settings">&#9881;</Link>
       </div>
     </header>
   );

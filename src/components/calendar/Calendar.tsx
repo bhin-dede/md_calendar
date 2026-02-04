@@ -49,7 +49,7 @@ interface CalendarDayProps {
 
 function CalendarDay({ year, month, day, isOtherMonth, docs }: CalendarDayProps) {
   const router = useRouter();
-  const dateTimestamp = new Date(year, month, day).getTime();
+  const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
   const classNames = [
     'calendar-day',
@@ -60,7 +60,7 @@ function CalendarDay({ year, month, day, isOtherMonth, docs }: CalendarDayProps)
 
   const handleDayClick = () => {
     if (!isOtherMonth) {
-      router.push(`/editor?date=${dateTimestamp}`);
+      router.push(`/editor?date=${dateString}`);
     }
   };
 

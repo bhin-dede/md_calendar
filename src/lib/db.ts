@@ -10,6 +10,7 @@ export async function createDocument(data: DocumentInput = {}): Promise<Document
     title: data.title || 'Untitled',
     content: data.content || '',
     date: data.date || now,
+    status: data.status || 'none',
   });
 }
 
@@ -24,6 +25,7 @@ export async function updateDocument(id: string, updates: Partial<DocumentInput>
     title: updates.title ?? null,
     content: updates.content ?? null,
     date: updates.date ?? null,
+    status: updates.status ?? null,
   });
 }
 

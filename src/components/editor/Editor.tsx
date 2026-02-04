@@ -7,9 +7,10 @@ import { MarkdownPreview } from './MarkdownPreview';
 import { useToast } from '@/context/ToastContext';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { createDocument, getDocument } from '@/lib/db';
-import { Document } from '@/lib/types';
+import { Document, DocumentStatus, STATUS_LABELS, STATUS_COLORS } from '@/lib/types';
 
 type SaveStatus = 'saved' | 'saving' | 'unsaved';
+const STATUS_OPTIONS: DocumentStatus[] = ['none', 'ready', 'in_progress', 'paused', 'completed'];
 
 interface EditorProps {
   documentId?: string;
@@ -25,6 +26,7 @@ export function Editor({ documentId }: EditorProps) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [status, setStatus] = useState<DocumentStatus>('none');
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved');
   const [currentDocId, setCurrentDocId] = useState<string | null>(documentId || null);
   const [isLoading, setIsLoading] = useState(!!documentId);
@@ -32,7 +34,13 @@ export function Editor({ documentId }: EditorProps) {
   const { scheduleAutoSave, cancelAutoSave } = useAutoSave({
     documentId: currentDocId,
     onSaveStart: () => setSaveStatus('saving'),
-    onSaveSuccess: () => setSaveStatus('saved'),
+    onSaveSuccess: (newId: string) => {
+      setSaveStatus('saved');
+      if (newId !== currentDocId) {
+        setCurrentDocId(newId);
+        router.replace(`/editor?id=${newId}`);
+      }
+    },
     onSaveError: (error) => {
       console.error('Auto-save failed:', error);
       showToast('Auto-save failed', 'error');
@@ -48,7 +56,10 @@ export function Editor({ documentId }: EditorProps) {
           setDocument(doc);
           setTitle(doc.title);
           setContent(doc.content);
-          setDate(new Date(doc.date).toISOString().split('T')[0]);
+          const d = new Date(doc.date);
+          const localDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+          setDate(localDate);
+          setStatus(doc.status || 'none');
           setCurrentDocId(doc.id);
         } else {
           showToast('Document not found', 'error');
@@ -58,7 +69,7 @@ export function Editor({ documentId }: EditorProps) {
       } else {
         const dateParam = searchParams.get('date');
         if (dateParam) {
-          setDate(new Date(parseInt(dateParam)).toISOString().split('T')[0]);
+          setDate(dateParam);
         }
         setIsLoading(false);
       }
@@ -72,16 +83,17 @@ export function Editor({ documentId }: EditorProps) {
     setContent(newContent);
   }, []);
 
-  const triggerAutoSave = useCallback(() => {
+  const triggerAutoSave = useCallback((updates?: { title?: string; content?: string; date?: string; status?: DocumentStatus }) => {
     if (currentDocId) {
       setSaveStatus('unsaved');
       scheduleAutoSave({
-        title,
-        content,
-        date: new Date(date).getTime(),
+        title: updates?.title ?? title,
+        content: updates?.content ?? content,
+        date: new Date(updates?.date ?? date).getTime(),
+        status: updates?.status ?? status,
       });
     }
-  }, [currentDocId, title, content, date, scheduleAutoSave]);
+  }, [currentDocId, title, content, date, status, scheduleAutoSave]);
 
   const handleInput = useCallback(async () => {
     handleContentChange();
@@ -93,6 +105,7 @@ export function Editor({ documentId }: EditorProps) {
           title: title || 'Untitled',
           content: newContent,
           date: new Date(date).getTime(),
+          status,
         });
         setCurrentDocId(doc.id);
         setDocument(doc);
@@ -102,21 +115,31 @@ export function Editor({ documentId }: EditorProps) {
         console.error('Failed to create document:', error);
       }
     } else if (currentDocId) {
-      triggerAutoSave();
+      triggerAutoSave({ content: newContent });
     }
   }, [currentDocId, title, date, router, showToast, handleContentChange, triggerAutoSave]);
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTitle(e.target.value);
+    const newTitle = e.target.value;
+    setTitle(newTitle);
     if (currentDocId) {
-      triggerAutoSave();
+      triggerAutoSave({ title: newTitle });
     }
   };
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setDate(e.target.value);
+    const newDate = e.target.value;
+    setDate(newDate);
     if (currentDocId) {
-      triggerAutoSave();
+      triggerAutoSave({ date: newDate });
+    }
+  };
+
+  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newStatus = e.target.value as DocumentStatus;
+    setStatus(newStatus);
+    if (currentDocId) {
+      triggerAutoSave({ status: newStatus });
     }
   };
 
@@ -179,6 +202,9 @@ export function Editor({ documentId }: EditorProps) {
   return (
     <div className="app-container view-editor">
       <div className="document-meta">
+        <button className="back-btn" onClick={() => router.back()} title="Go back">
+          ←
+        </button>
         <input
           type="text"
           className="title-input"
@@ -193,6 +219,18 @@ export function Editor({ documentId }: EditorProps) {
             value={date}
             onChange={handleDateChange}
           />
+        </div>
+        <div className="document-meta-item">
+          <select
+            className="status-select"
+            value={status}
+            onChange={handleStatusChange}
+            style={{ borderLeft: `4px solid ${STATUS_COLORS[status]}` }}
+          >
+            {STATUS_OPTIONS.map((s) => (
+              <option key={s} value={s}>{STATUS_LABELS[s]}</option>
+            ))}
+          </select>
         </div>
         <div className={`save-indicator ${saveStatus}`}>
           <span>

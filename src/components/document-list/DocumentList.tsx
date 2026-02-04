@@ -1,19 +1,28 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { DocumentCard } from './DocumentCard';
 import { ConfirmModal } from '@/components/Modal';
 import { useToast } from '@/context/ToastContext';
-import { Document } from '@/lib/types';
-import { getAllDocuments, searchDocuments, deleteDocument, createDocument } from '@/lib/db';
+import { Document, STATUS_LABELS, STATUS_COLORS } from '@/lib/types';
+import { getAllDocuments, searchDocuments, deleteDocument, createDocument, formatDate } from '@/lib/db';
+
+type ViewMode = 'grid' | 'table';
+type SortField = 'title' | 'date' | 'status' | 'updatedAt' | 'createdAt';
+type SortOrder = 'asc' | 'desc';
 
 export function DocumentList() {
+  const router = useRouter();
   const { showToast } = useToast();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState<Document | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [sortField, setSortField] = useState<SortField>('updatedAt');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
   const loadDocuments = useCallback(async () => {
     setIsLoading(true);
@@ -39,6 +48,56 @@ export function DocumentList() {
     }, 300);
     return () => clearTimeout(timer);
   }, [searchQuery, loadDocuments]);
+
+  const sortedDocuments = useMemo(() => {
+    const sorted = [...documents].sort((a, b) => {
+      let aVal: string | number;
+      let bVal: string | number;
+
+      switch (sortField) {
+        case 'title':
+          aVal = a.title.toLowerCase();
+          bVal = b.title.toLowerCase();
+          break;
+        case 'date':
+          aVal = a.date;
+          bVal = b.date;
+          break;
+        case 'status':
+          aVal = a.status || 'none';
+          bVal = b.status || 'none';
+          break;
+        case 'createdAt':
+          aVal = a.createdAt;
+          bVal = b.createdAt;
+          break;
+        case 'updatedAt':
+        default:
+          aVal = a.updatedAt;
+          bVal = b.updatedAt;
+          break;
+      }
+
+      if (aVal < bVal) return sortOrder === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+    return sorted;
+  }, [documents, sortField, sortOrder]);
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('desc');
+    }
+  };
+
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) return '⇅';
+    return sortOrder === 'asc' ? '↑' : '↓';
+  };
 
   const handleExport = (doc: Document) => {
     const filename = (doc.title || 'untitled').replace(/[^a-zA-Z0-9\uAC00-\uD7AF]/g, '_') + '.md';
@@ -110,6 +169,57 @@ export function DocumentList() {
     });
   };
 
+  const renderTableView = () => (
+    <div className="table-container">
+      <table className="doc-table">
+        <thead>
+          <tr>
+            <th onClick={() => handleSort('title')} className="sortable">
+              Title {getSortIcon('title')}
+            </th>
+            <th onClick={() => handleSort('status')} className="sortable">
+              Status {getSortIcon('status')}
+            </th>
+            <th onClick={() => handleSort('date')} className="sortable">
+              Date {getSortIcon('date')}
+            </th>
+            <th onClick={() => handleSort('updatedAt')} className="sortable">
+              Modified {getSortIcon('updatedAt')}
+            </th>
+            <th onClick={() => handleSort('createdAt')} className="sortable">
+              Created {getSortIcon('createdAt')}
+            </th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {sortedDocuments.map((doc) => (
+            <tr key={doc.id} onClick={() => router.push(`/editor?id=${doc.id}`)} className="clickable-row">
+              <td className="title-cell">{doc.title || 'Untitled'}</td>
+              <td>
+                {doc.status && doc.status !== 'none' && (
+                  <span
+                    className="status-badge"
+                    style={{ backgroundColor: STATUS_COLORS[doc.status] }}
+                  >
+                    {STATUS_LABELS[doc.status]}
+                  </span>
+                )}
+              </td>
+              <td>{formatDate(doc.date)}</td>
+              <td>{formatDate(doc.updatedAt)}</td>
+              <td>{formatDate(doc.createdAt)}</td>
+              <td className="actions-cell" onClick={(e) => e.stopPropagation()}>
+                <button className="btn btn-sm" onClick={() => handleExport(doc)}>Export</button>
+                <button className="btn btn-sm btn-danger" onClick={() => setDeleteTarget(doc)}>Delete</button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+
   const renderContent = () => {
     if (isLoading) {
       return <div className="loading">Loading...</div>;
@@ -138,9 +248,13 @@ export function DocumentList() {
       );
     }
 
+    if (viewMode === 'table') {
+      return renderTableView();
+    }
+
     return (
       <div className="list-grid">
-        {documents.map((doc) => (
+        {sortedDocuments.map((doc) => (
           <DocumentCard
             key={doc.id}
             document={doc}
@@ -157,6 +271,22 @@ export function DocumentList() {
       <div className="list-header">
         <div className="flex items-center gap-md">
           <h2 className="page-title">Documents</h2>
+          <div className="view-toggle">
+            <button
+              className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
+              onClick={() => setViewMode('grid')}
+              title="Grid View"
+            >
+              ▦
+            </button>
+            <button
+              className={`view-toggle-btn ${viewMode === 'table' ? 'active' : ''}`}
+              onClick={() => setViewMode('table')}
+              title="Table View"
+            >
+              ☰
+            </button>
+          </div>
         </div>
         <div className="flex items-center gap-md">
           <div className="search-box list-search">

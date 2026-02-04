@@ -150,13 +150,12 @@ export function Editor({ documentId }: EditorProps) {
     const selected = text.substring(start, end);
 
     const newText = text.substring(0, start) + before + selected + after + text.substring(end);
+    textarea.value = newText;
     setContent(newText);
 
-    setTimeout(() => {
-      textarea.focus();
-      const newPos = start + before.length + selected.length;
-      textarea.setSelectionRange(newPos, newPos);
-    }, 0);
+    textarea.focus();
+    const newPos = start + before.length + selected.length;
+    textarea.setSelectionRange(newPos, newPos);
 
     if (currentDocId) {
       triggerAutoSave({ content: newText });
@@ -172,34 +171,32 @@ export function Editor({ documentId }: EditorProps) {
     const lineStart = text.lastIndexOf('\n', start - 1) + 1;
     
     const newText = text.substring(0, lineStart) + prefix + text.substring(lineStart);
+    textarea.value = newText;
     setContent(newText);
 
-    setTimeout(() => {
-      textarea.focus();
-      const newPos = start + prefix.length;
-      textarea.setSelectionRange(newPos, newPos);
-    }, 0);
+    textarea.focus();
+    const newPos = start + prefix.length;
+    textarea.setSelectionRange(newPos, newPos);
 
     if (currentDocId) {
       triggerAutoSave({ content: newText });
     }
   }, [currentDocId, triggerAutoSave]);
 
-  const insertAtCursor = useCallback((text: string) => {
+  const insertAtCursor = useCallback((insertText: string) => {
     const textarea = textareaRef.current;
     if (!textarea) return;
 
     const start = textarea.selectionStart;
     const currentText = textarea.value;
     
-    const newText = currentText.substring(0, start) + text + currentText.substring(start);
+    const newText = currentText.substring(0, start) + insertText + currentText.substring(start);
+    textarea.value = newText;
     setContent(newText);
 
-    setTimeout(() => {
-      textarea.focus();
-      const newPos = start + text.length;
-      textarea.setSelectionRange(newPos, newPos);
-    }, 0);
+    textarea.focus();
+    const newPos = start + insertText.length;
+    textarea.setSelectionRange(newPos, newPos);
 
     if (currentDocId) {
       triggerAutoSave({ content: newText });

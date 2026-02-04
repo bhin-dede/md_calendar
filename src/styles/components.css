@@ -183,6 +183,8 @@
 .preview-content p { margin-bottom: var(--space-md); }
 .preview-content ul, .preview-content ol { margin-bottom: var(--space-md); padding-left: var(--space-lg); }
 .preview-content li { margin-bottom: var(--space-xs); }
+.preview-content li:has(input[type="checkbox"]) { list-style: none; margin-left: calc(-1 * var(--space-lg)); }
+.preview-content input[type="checkbox"] { margin-right: var(--space-sm); cursor: pointer; }
 .preview-content blockquote {
   margin: var(--space-md) 0;
   padding: var(--space-md);

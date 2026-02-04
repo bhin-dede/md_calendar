@@ -228,6 +228,7 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 | `Ctrl+Shift+O` | 1. Numbered list |
 | `Ctrl+Shift+Q` | > Blockquote |
 | `Ctrl+Shift+H` | Horizontal rule |
+| `Ctrl+Shift+T` | - [ ] Checklist |
 
 ## Roadmap
 

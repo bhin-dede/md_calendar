@@ -233,6 +233,10 @@ export function Editor({ documentId }: EditorProps) {
           e.preventDefault();
           insertAtCursor('\n---\n');
           return;
+        case 't':
+          e.preventDefault();
+          applyLinePrefix('- [ ] ');
+          return;
       }
     }
     if (e.ctrlKey || e.metaKey) {

@@ -140,6 +140,64 @@ export function Editor({ documentId }: EditorProps) {
     }
   }, [currentDocId, triggerAutoSave]);
 
+  const applyFormat = useCallback((before: string, after: string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    const selected = text.substring(start, end);
+
+    const newText = text.substring(0, start) + before + selected + after + text.substring(end);
+    setContent(newText);
+
+    setTimeout(() => {
+      textarea.focus();
+      const newPos = start + before.length + selected.length;
+      textarea.setSelectionRange(newPos, newPos);
+    }, 0);
+
+    if (currentDocId) {
+      triggerAutoSave({ content: newText });
+    }
+  }, [currentDocId, triggerAutoSave]);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.ctrlKey || e.metaKey) {
+      switch (e.key.toLowerCase()) {
+        case 'b':
+          e.preventDefault();
+          applyFormat('**', '**');
+          break;
+        case 'i':
+          e.preventDefault();
+          applyFormat('_', '_');
+          break;
+        case 'k':
+          e.preventDefault();
+          applyFormat('[', '](url)');
+          break;
+        case '`':
+          e.preventDefault();
+          applyFormat('`', '`');
+          break;
+      }
+    }
+    if (e.ctrlKey && e.shiftKey) {
+      switch (e.key.toLowerCase()) {
+        case 's':
+          e.preventDefault();
+          applyFormat('~~', '~~');
+          break;
+        case 'k':
+          e.preventDefault();
+          applyFormat('```\n', '\n```');
+          break;
+      }
+    }
+  }, [applyFormat]);
+
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTitle = e.target.value;
     setTitle(newTitle);
@@ -285,6 +343,7 @@ export function Editor({ documentId }: EditorProps) {
             placeholder="Start writing your markdown here..."
             value={content}
             onChange={handleInput}
+            onKeyDown={handleKeyDown}
           />
         </div>
         <MarkdownPreview content={content} onContentChange={handlePreviewContentChange} />

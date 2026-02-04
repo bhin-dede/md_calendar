@@ -211,14 +211,25 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 - [PROJECT_META.md](./PROJECT_META.md) - Project metadata & architecture
 - [CONTINUATION_GUIDE.md](./CONTINUATION_GUIDE.md) - Development continuation guide
 
+## Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+B` | **Bold** |
+| `Ctrl+I` | *Italic* |
+| `Ctrl+K` | [Link](url) |
+| `Ctrl+`` ` | `Inline code` |
+| `Ctrl+Shift+S` | ~~Strikethrough~~ |
+| `Ctrl+Shift+K` | Code block |
+
 ## Roadmap
 
 - [x] Tauri desktop app
 - [x] Local file storage
 - [x] Custom folder selection
+- [x] Keyboard shortcuts
 - [ ] Tag system
 - [ ] Dark mode
-- [ ] Keyboard shortcuts
 - [ ] Drag & drop import
 - [ ] Cloud sync
 - [ ] Version history

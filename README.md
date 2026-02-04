@@ -11,12 +11,14 @@
 ## Features
 
 - **Split Editor** - 좌측 마크다운 에디터, 우측 실시간 프리뷰
+- **Fullscreen Preview** - 프리뷰 전체화면 모드 지원
+- **Interactive Checkboxes** - 프리뷰에서 체크리스트 직접 체크 가능
 - **Auto Save** - 2초 디바운스 자동 저장
 - **Local File Storage** - 로컬 폴더에 .md 파일로 저장
 - **Custom Folder** - 저장 폴더 직접 지정 가능
 - **Import/Export** - .md 파일 가져오기/내보내기
 - **Document List** - 문서 목록 관리 및 검색
-- **Calendar View** - 날짜별 문서 시각화
+- **Calendar View** - 날짜별 문서 시각화 (기본 시작 화면)
 - **Neobrutalism UI** - 모던하고 독특한 디자인
 - **Desktop App** - Tauri 기반 크로스 플랫폼 데스크톱 앱
 
@@ -24,9 +26,9 @@
 
 ### Linux (AppImage)
 
-[![Download AppImage](https://img.shields.io/badge/Download-AppImage-blue?style=for-the-badge&logo=linux)](https://github.com/bhin-dede/md_calendar/releases/latest/download/MD.Calendar_0.1.0_amd64.AppImage)
+[![Download AppImage](https://img.shields.io/badge/Download-AppImage-blue?style=for-the-badge&logo=linux)](https://github.com/bhin-dede/md_calendar/releases/latest/download/MD.Calendar_0.2.0_amd64.AppImage)
 
-**[MD Calendar_0.1.0_amd64.AppImage](https://github.com/bhin-dede/md_calendar/releases/latest/download/MD.Calendar_0.1.0_amd64.AppImage)** (77MB)
+**[MD Calendar_0.2.0_amd64.AppImage](https://github.com/bhin-dede/md_calendar/releases/latest/download/MD.Calendar_0.2.0_amd64.AppImage)** (77MB)
 
 ### 실행 조건
 
@@ -50,10 +52,10 @@ sudo pacman -S webkit2gtk-4.1
 
 ```bash
 # 1. 다운로드 후 실행 권한 부여
-chmod +x MD\ Calendar_0.1.0_amd64.AppImage
+chmod +x MD\ Calendar_0.2.0_amd64.AppImage
 
 # 2. 실행
-./MD\ Calendar_0.1.0_amd64.AppImage
+./MD\ Calendar_0.2.0_amd64.AppImage
 ```
 
 > **Tip**: `~/Applications` 폴더에 복사하면 앱 런처에서도 찾을 수 있습니다.

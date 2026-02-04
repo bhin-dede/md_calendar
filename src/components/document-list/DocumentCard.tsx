@@ -77,15 +77,6 @@ export function DocumentCard({ document, onExport, onDelete }: DocumentCardProps
       </div>
       <div className="document-card-actions">
         <button
-          className="btn btn-sm btn-secondary"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          }}
-        >
-          Edit
-        </button>
-        <button
           className="btn btn-sm"
           onClick={(e) => {
             e.preventDefault();

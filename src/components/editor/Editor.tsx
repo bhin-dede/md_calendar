@@ -22,6 +22,7 @@ export function Editor({ documentId }: EditorProps) {
   const { showToast } = useToast();
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const datePickerRef = useRef<HTMLInputElement>(null);
   const [document, setDocument] = useState<Document | null>(null);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -77,6 +78,16 @@ export function Editor({ documentId }: EditorProps) {
     loadDocument();
   }, [documentId, router, searchParams, showToast]);
 
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (datePickerRef.current && !datePickerRef.current.contains(e.target as Node)) {
+        datePickerRef.current.blur();
+      }
+    };
+    window.document.addEventListener('mousedown', handleClickOutside);
+    return () => window.document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const handleContentChange = useCallback(() => {
     if (!textareaRef.current) return;
     const newContent = textareaRef.current.value;
@@ -118,6 +129,16 @@ export function Editor({ documentId }: EditorProps) {
       triggerAutoSave({ content: newContent });
     }
   }, [currentDocId, title, date, router, showToast, handleContentChange, triggerAutoSave]);
+
+  const handlePreviewContentChange = useCallback((newContent: string) => {
+    setContent(newContent);
+    if (textareaRef.current) {
+      textareaRef.current.value = newContent;
+    }
+    if (currentDocId) {
+      triggerAutoSave({ content: newContent });
+    }
+  }, [currentDocId, triggerAutoSave]);
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTitle = e.target.value;
@@ -214,6 +235,7 @@ export function Editor({ documentId }: EditorProps) {
         />
         <div className="document-meta-item">
           <input
+            ref={datePickerRef}
             type="date"
             className="date-picker"
             value={date}
@@ -225,7 +247,6 @@ export function Editor({ documentId }: EditorProps) {
             className="status-select"
             value={status}
             onChange={handleStatusChange}
-            style={{ borderLeft: `4px solid ${STATUS_COLORS[status]}` }}
           >
             {STATUS_OPTIONS.map((s) => (
               <option key={s} value={s}>{STATUS_LABELS[s]}</option>
@@ -266,7 +287,7 @@ export function Editor({ documentId }: EditorProps) {
             onChange={handleInput}
           />
         </div>
-        <MarkdownPreview content={content} />
+        <MarkdownPreview content={content} onContentChange={handlePreviewContentChange} />
       </div>
     </div>
   );

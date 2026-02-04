@@ -218,10 +218,14 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 | `Ctrl+B` | **Bold** |
 | `Ctrl+I` | *Italic* |
 | `Ctrl+K` | [Link](url) |
-| `Ctrl+`` ` | `Inline code` |
+| `Ctrl+E` | `Inline code` |
+| `Ctrl+L` | - [ ] Checklist (Obsidian style) |
 | `Ctrl+1` | # Heading 1 |
 | `Ctrl+2` | ## Heading 2 |
 | `Ctrl+3` | ### Heading 3 |
+| `Ctrl+Shift+1` | # Heading 1 |
+| `Ctrl+Shift+2` | ## Heading 2 |
+| `Ctrl+Shift+3` | ### Heading 3 |
 | `Ctrl+Shift+S` | ~~Strikethrough~~ |
 | `Ctrl+Shift+K` | Code block |
 | `Ctrl+Shift+U` | - Bullet list |
@@ -229,6 +233,7 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 | `Ctrl+Shift+Q` | > Blockquote |
 | `Ctrl+Shift+H` | Horizontal rule |
 | `Ctrl+Shift+T` | - [ ] Checklist |
+| `Ctrl+Shift+=` | ==Highlight== |
 
 ## Roadmap
 

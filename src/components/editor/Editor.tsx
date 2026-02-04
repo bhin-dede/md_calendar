@@ -208,34 +208,61 @@ export function Editor({ documentId }: EditorProps) {
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.ctrlKey && e.shiftKey) {
-      switch (e.key.toLowerCase()) {
+      switch (e.key) {
+        case 'S':
         case 's':
           e.preventDefault();
           applyFormat('~~', '~~');
           return;
+        case 'K':
         case 'k':
           e.preventDefault();
           applyFormat('```\n', '\n```');
           return;
+        case 'U':
         case 'u':
           e.preventDefault();
           applyLinePrefix('- ');
           return;
+        case 'O':
         case 'o':
           e.preventDefault();
           applyLinePrefix('1. ');
           return;
+        case 'Q':
         case 'q':
           e.preventDefault();
           applyLinePrefix('> ');
           return;
+        case 'H':
         case 'h':
           e.preventDefault();
           insertAtCursor('\n---\n');
           return;
+        case 'T':
         case 't':
           e.preventDefault();
           applyLinePrefix('- [ ] ');
+          return;
+        case '!':
+        case '1':
+          e.preventDefault();
+          applyLinePrefix('# ');
+          return;
+        case '@':
+        case '2':
+          e.preventDefault();
+          applyLinePrefix('## ');
+          return;
+        case '#':
+        case '3':
+          e.preventDefault();
+          applyLinePrefix('### ');
+          return;
+        case '=':
+        case '+':
+          e.preventDefault();
+          applyFormat('==', '==');
           return;
       }
     }
@@ -253,9 +280,14 @@ export function Editor({ documentId }: EditorProps) {
           e.preventDefault();
           applyFormat('[', '](url)');
           break;
+        case 'e':
         case '`':
           e.preventDefault();
           applyFormat('`', '`');
+          break;
+        case 'l':
+          e.preventDefault();
+          applyLinePrefix('- [ ] ');
           break;
         case '1':
           e.preventDefault();

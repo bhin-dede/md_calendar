@@ -242,6 +242,11 @@
   background-color: var(--color-border);
   margin: var(--space-lg) 0;
 }
+.preview-content mark {
+  background-color: var(--color-accent);
+  padding: 0.1em 0.3em;
+  border-radius: 2px;
+}
 
 .document-meta {
   display: flex;

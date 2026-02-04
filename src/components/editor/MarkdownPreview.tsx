@@ -9,6 +9,23 @@ marked.setOptions({
   gfm: true,
 });
 
+const highlightExtension = {
+  name: 'highlight',
+  level: 'inline' as const,
+  start(src: string) { return src.indexOf('=='); },
+  tokenizer(src: string) {
+    const match = /^==([^=]+)==/.exec(src);
+    if (match) {
+      return { type: 'highlight', raw: match[0], text: match[1] };
+    }
+  },
+  renderer(token: { text: string }) {
+    return `<mark>${token.text}</mark>`;
+  },
+};
+
+marked.use({ extensions: [highlightExtension] });
+
 const renderer = new marked.Renderer();
 renderer.code = function ({ text, lang }: { text: string; lang?: string }) {
   if (lang && hljs.getLanguage(lang)) {

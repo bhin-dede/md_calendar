@@ -26,9 +26,9 @@
 
 ### Linux (AppImage)
 
-[![Download AppImage](https://img.shields.io/badge/Download-AppImage-blue?style=for-the-badge&logo=linux)](https://github.com/bhin-dede/md_calendar/releases/latest/download/MD.Calendar_0.2.0_amd64.AppImage)
+[![Download AppImage](https://img.shields.io/badge/Download-AppImage-blue?style=for-the-badge&logo=linux)](https://github.com/bhin-dede/md_calendar/releases/latest/download/MD.Calendar_0.3.0_amd64.AppImage)
 
-**[MD Calendar_0.2.0_amd64.AppImage](https://github.com/bhin-dede/md_calendar/releases/latest/download/MD.Calendar_0.2.0_amd64.AppImage)** (77MB)
+**[MD Calendar_0.3.0_amd64.AppImage](https://github.com/bhin-dede/md_calendar/releases/latest/download/MD.Calendar_0.3.0_amd64.AppImage)** (77MB)
 
 ### 실행 조건
 

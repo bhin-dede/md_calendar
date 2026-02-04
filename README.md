@@ -213,27 +213,43 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 ## Keyboard Shortcuts
 
+### Markdown Style (Notion Style)
+
+| 입력 | 결과 |
+|------|------|
+| `[]` + `Space` | - [ ] 체크박스 |
+| `#` + `Space` | # 제목1 |
+| `##` + `Space` | ## 제목2 |
+| `###` + `Space` | ### 제목3 |
+| `-` + `Space` | - 글머리 기호 |
+| `1.` + `Space` | 1. 번호 목록 |
+| `>` + `Space` | > 인용구 |
+
+### Text Formatting
+
 | Shortcut | Action |
 |----------|--------|
 | `Ctrl+B` | **Bold** |
 | `Ctrl+I` | *Italic* |
+| `Ctrl+U` | <u>Underline</u> |
 | `Ctrl+K` | [Link](url) |
 | `Ctrl+E` | `Inline code` |
-| `Ctrl+L` | - [ ] Checklist (Obsidian style) |
-| `Ctrl+1` | # Heading 1 |
-| `Ctrl+2` | ## Heading 2 |
-| `Ctrl+3` | ### Heading 3 |
+| `Ctrl+L` | - [ ] Checklist |
+| `Ctrl+Shift+S` | ~~Strikethrough~~ |
+| `Ctrl+Shift+=` | ==Highlight== |
+
+### Block Creation (Notion Style: Ctrl+Shift+Number)
+
+| Shortcut | Action |
+|----------|--------|
 | `Ctrl+Shift+1` | # Heading 1 |
 | `Ctrl+Shift+2` | ## Heading 2 |
 | `Ctrl+Shift+3` | ### Heading 3 |
-| `Ctrl+Shift+S` | ~~Strikethrough~~ |
-| `Ctrl+Shift+K` | Code block |
-| `Ctrl+Shift+U` | - Bullet list |
-| `Ctrl+Shift+O` | 1. Numbered list |
-| `Ctrl+Shift+Q` | > Blockquote |
-| `Ctrl+Shift+H` | Horizontal rule |
-| `Ctrl+Shift+T` | - [ ] Checklist |
-| `Ctrl+Shift+=` | ==Highlight== |
+| `Ctrl+Shift+4` | - [ ] Checklist |
+| `Ctrl+Shift+5` | - Bullet list |
+| `Ctrl+Shift+6` | 1. Numbered list |
+| `Ctrl+Shift+7` | > Blockquote |
+| `Ctrl+Shift+8` | Code block |
 
 ## Roadmap
 

@@ -51,7 +51,8 @@ export function MarkdownPreview({ content, onContentChange }: MarkdownPreviewPro
 
   useEffect(() => {
     const renderMarkdown = async () => {
-      const rawHtml = marked.parse(content || '') as string;
+      const preprocessed = (content || '').replace(/^(\s*[-*+]\s*\[[ x]\])\s*$/gm, '$1 ​');
+      const rawHtml = marked.parse(preprocessed) as string;
       const DOMPurify = (await import('dompurify')).default;
       const sanitized = DOMPurify.sanitize(rawHtml);
       const enabledCheckboxes = sanitized.replace(/disabled=""\s*/g, '');

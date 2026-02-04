@@ -40,10 +40,12 @@ marked.use({ renderer });
 
 interface MarkdownPreviewProps {
   content: string;
+  title?: string;
+  date?: string;
   onContentChange?: (newContent: string) => void;
 }
 
-export function MarkdownPreview({ content, onContentChange }: MarkdownPreviewProps) {
+export function MarkdownPreview({ content, title, date, onContentChange }: MarkdownPreviewProps) {
   const [html, setHtml] = useState('');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
@@ -136,12 +138,18 @@ export function MarkdownPreview({ content, onContentChange }: MarkdownPreviewPro
       {isFullscreen && (
         <div className="fullscreen-overlay" onClick={() => setIsFullscreen(false)}>
           <div className="fullscreen-modal" onClick={(e) => e.stopPropagation()}>
-            <button
-              className="fullscreen-close"
-              onClick={() => setIsFullscreen(false)}
-            >
-              ✕
-            </button>
+            <div className="fullscreen-header">
+              <div className="fullscreen-meta">
+                <h1 className="fullscreen-title">{title || 'Untitled'}</h1>
+                {date && <span className="fullscreen-date">{date}</span>}
+              </div>
+              <button
+                className="fullscreen-close"
+                onClick={() => setIsFullscreen(false)}
+              >
+                ✕
+              </button>
+            </div>
             <div
               ref={fullscreenRef}
               className="fullscreen-content preview-content"

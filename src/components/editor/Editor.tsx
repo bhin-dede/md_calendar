@@ -518,7 +518,7 @@ export function Editor({ documentId }: EditorProps) {
             onKeyDown={handleKeyDown}
           />
         </div>
-        <MarkdownPreview content={content} onContentChange={handlePreviewContentChange} />
+        <MarkdownPreview content={content} title={title} date={date} onContentChange={handlePreviewContentChange} />
       </div>
     </div>
   );

@@ -219,8 +219,15 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 | `Ctrl+I` | *Italic* |
 | `Ctrl+K` | [Link](url) |
 | `Ctrl+`` ` | `Inline code` |
+| `Ctrl+1` | # Heading 1 |
+| `Ctrl+2` | ## Heading 2 |
+| `Ctrl+3` | ### Heading 3 |
 | `Ctrl+Shift+S` | ~~Strikethrough~~ |
 | `Ctrl+Shift+K` | Code block |
+| `Ctrl+Shift+U` | - Bullet list |
+| `Ctrl+Shift+O` | 1. Numbered list |
+| `Ctrl+Shift+Q` | > Blockquote |
+| `Ctrl+Shift+H` | Horizontal rule |
 
 ## Roadmap
 

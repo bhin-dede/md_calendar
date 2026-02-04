@@ -163,9 +163,80 @@ export function Editor({ documentId }: EditorProps) {
     }
   }, [currentDocId, triggerAutoSave]);
 
+  const applyLinePrefix = useCallback((prefix: string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const text = textarea.value;
+    const lineStart = text.lastIndexOf('\n', start - 1) + 1;
+    
+    const newText = text.substring(0, lineStart) + prefix + text.substring(lineStart);
+    setContent(newText);
+
+    setTimeout(() => {
+      textarea.focus();
+      const newPos = start + prefix.length;
+      textarea.setSelectionRange(newPos, newPos);
+    }, 0);
+
+    if (currentDocId) {
+      triggerAutoSave({ content: newText });
+    }
+  }, [currentDocId, triggerAutoSave]);
+
+  const insertAtCursor = useCallback((text: string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const currentText = textarea.value;
+    
+    const newText = currentText.substring(0, start) + text + currentText.substring(start);
+    setContent(newText);
+
+    setTimeout(() => {
+      textarea.focus();
+      const newPos = start + text.length;
+      textarea.setSelectionRange(newPos, newPos);
+    }, 0);
+
+    if (currentDocId) {
+      triggerAutoSave({ content: newText });
+    }
+  }, [currentDocId, triggerAutoSave]);
+
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.ctrlKey || e.metaKey) {
+    if (e.ctrlKey && e.shiftKey) {
       switch (e.key.toLowerCase()) {
+        case 's':
+          e.preventDefault();
+          applyFormat('~~', '~~');
+          return;
+        case 'k':
+          e.preventDefault();
+          applyFormat('```\n', '\n```');
+          return;
+        case 'u':
+          e.preventDefault();
+          applyLinePrefix('- ');
+          return;
+        case 'o':
+          e.preventDefault();
+          applyLinePrefix('1. ');
+          return;
+        case 'q':
+          e.preventDefault();
+          applyLinePrefix('> ');
+          return;
+        case 'h':
+          e.preventDefault();
+          insertAtCursor('\n---\n');
+          return;
+      }
+    }
+    if (e.ctrlKey || e.metaKey) {
+      switch (e.key) {
         case 'b':
           e.preventDefault();
           applyFormat('**', '**');
@@ -182,21 +253,21 @@ export function Editor({ documentId }: EditorProps) {
           e.preventDefault();
           applyFormat('`', '`');
           break;
+        case '1':
+          e.preventDefault();
+          applyLinePrefix('# ');
+          break;
+        case '2':
+          e.preventDefault();
+          applyLinePrefix('## ');
+          break;
+        case '3':
+          e.preventDefault();
+          applyLinePrefix('### ');
+          break;
       }
     }
-    if (e.ctrlKey && e.shiftKey) {
-      switch (e.key.toLowerCase()) {
-        case 's':
-          e.preventDefault();
-          applyFormat('~~', '~~');
-          break;
-        case 'k':
-          e.preventDefault();
-          applyFormat('```\n', '\n```');
-          break;
-      }
-    }
-  }, [applyFormat]);
+  }, [applyFormat, applyLinePrefix, insertAtCursor]);
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTitle = e.target.value;

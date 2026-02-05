@@ -79,12 +79,13 @@ export function TitleBar() {
           const newX = topRightX - MEMO_MODE_WIDTH;
           await appWindow.setPosition(new PhysicalPosition(newX, currentPos.y));
           await appWindow.setSize(new PhysicalSize(MEMO_MODE_WIDTH, currentSize.height));
-        } else if (previousSize.current) {
+        } else {
+          const restoreWidth = previousSize.current?.width || 1200;
           const topRightX = currentPos.x + currentSize.width;
           
-          const newX = topRightX - previousSize.current.width;
+          const newX = topRightX - restoreWidth;
           await appWindow.setPosition(new PhysicalPosition(newX, currentPos.y));
-          await appWindow.setSize(new PhysicalSize(previousSize.current.width, currentSize.height));
+          await appWindow.setSize(new PhysicalSize(restoreWidth, currentSize.height));
         }
       } catch (e) {
         console.log('Resize failed:', e);

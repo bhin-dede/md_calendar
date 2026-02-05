@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useMemoMode } from '@/context/MemoModeContext';
-import { getAllDocuments, getDocument, updateDocument } from '@/lib/db';
+import { getAllDocuments, getDocument, updateDocument, createDocument } from '@/lib/db';
 import { Document, DocumentStatus } from '@/lib/types';
 
 const STATUS_ICONS: Record<DocumentStatus, string | null> = {
@@ -24,6 +24,14 @@ export function MemoView() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
   const [content, setContent] = useState('');
+  const [newItemText, setNewItemText] = useState('');
+  const [isAddingItem, setIsAddingItem] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editingItemLine, setEditingItemLine] = useState<number | null>(null);
+  const [editText, setEditText] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+  const titleInputRef = useRef<HTMLInputElement>(null);
+  const itemInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const loadDocuments = async () => {
@@ -85,36 +93,98 @@ export function MemoView() {
     await updateDocument(selectedDoc.id, { content: newContent });
   };
 
+  const handleCreateDocument = async () => {
+    const doc = await createDocument({
+      title: '새 메모',
+      content: '- [ ] ',
+      date: Date.now(),
+      status: 'none',
+    });
+    setDocuments([doc, ...documents]);
+    setSelectedDocId(doc.id);
+  };
+
+  const handleAddItem = async () => {
+    if (!selectedDoc || !newItemText.trim()) return;
+
+    const newLine = `- [ ] ${newItemText.trim()}`;
+    const newContent = content ? `${content}\n${newLine}` : newLine;
+    
+    setContent(newContent);
+    await updateDocument(selectedDoc.id, { content: newContent });
+    
+    setNewItemText('');
+    setIsAddingItem(false);
+  };
+
+  const handleStartAddItem = () => {
+    setIsAddingItem(true);
+    setTimeout(() => inputRef.current?.focus(), 0);
+  };
+
+  const handleStartEditTitle = () => {
+    if (!selectedDoc) return;
+    setEditText(selectedDoc.title);
+    setIsEditingTitle(true);
+    setTimeout(() => titleInputRef.current?.focus(), 0);
+  };
+
+  const handleSaveTitle = async () => {
+    if (!selectedDoc) return;
+    await updateDocument(selectedDoc.id, { title: editText });
+    setSelectedDoc({ ...selectedDoc, title: editText });
+    setIsEditingTitle(false);
+  };
+
+  const handleStartEditItem = (lineIndex: number, text: string) => {
+    setEditText(text);
+    setEditingItemLine(lineIndex);
+    setTimeout(() => itemInputRef.current?.focus(), 0);
+  };
+
+  const handleSaveItem = async () => {
+    if (!selectedDoc || editingItemLine === null) return;
+
+    const lines = content.split('\n');
+    const line = lines[editingItemLine];
+    
+    const newLine = line.replace(/^(\s*-\s*\[[ x]\]\s*).*$/i, `$1${editText}`);
+    lines[editingItemLine] = newLine;
+
+    const newContent = lines.join('\n');
+    setContent(newContent);
+    await updateDocument(selectedDoc.id, { content: newContent });
+    
+    setEditingItemLine(null);
+  };
+
   if (!selectedDocId) {
     return (
       <div className="memo-view">
         <div className="memo-doc-list">
-          {documents.length === 0 ? (
-            <div className="memo-empty">
-              <span>저장된 문서가 없습니다</span>
-            </div>
-          ) : (
-            documents.map((doc) => (
-              <button
-                key={doc.id}
-                className="memo-doc-item"
-                onClick={() => setSelectedDocId(doc.id)}
-              >
-                <div className="memo-doc-info">
-                  {STATUS_ICONS[doc.status || 'none'] && (
-                    <span className={`memo-status-icon status-${doc.status}`}>
-                      {STATUS_ICONS[doc.status || 'none']}
-                    </span>
-                  )}
-                  <span className="memo-doc-title">{doc.title || 'Untitled'}</span>
-                </div>
-                <span className="memo-doc-date">
-                  {new Date(doc.date).toLocaleDateString('ko-KR')}
-                </span>
-              </button>
-            ))
-          )}
+          {documents.map((doc) => (
+            <button
+              key={doc.id}
+              className="memo-doc-item"
+              onClick={() => setSelectedDocId(doc.id)}
+            >
+              <div className="memo-doc-info">
+                {STATUS_ICONS[doc.status || 'none'] && (
+                  <span className={`memo-status-icon status-${doc.status}`}>
+                    {STATUS_ICONS[doc.status || 'none']}
+                  </span>
+                )}
+                <span className="memo-doc-title">{doc.title || 'Untitled'}</span>
+              </div>
+              <span className="memo-doc-date">
+                {new Date(doc.date).toLocaleDateString('ko-KR')}
+              </span>
+            </button>
+          ))}
         </div>
+        <button className="memo-add-btn" onClick={handleCreateDocument}>
+          +
+        </button>
       </div>
     );
   }
@@ -127,27 +197,80 @@ export function MemoView() {
         <button className="memo-back-btn" onClick={() => setSelectedDocId(null)}>
           ←
         </button>
-        <span className="memo-doc-name">{selectedDoc?.title || 'Untitled'}</span>
+        {isEditingTitle ? (
+          <input
+            ref={titleInputRef}
+            type="text"
+            className="memo-title-input"
+            value={editText}
+            onChange={(e) => setEditText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleSaveTitle();
+              if (e.key === 'Escape') setIsEditingTitle(false);
+            }}
+            onBlur={handleSaveTitle}
+          />
+        ) : (
+          <span className="memo-doc-name" onClick={handleStartEditTitle}>
+            {selectedDoc?.title || 'Untitled'}
+          </span>
+        )}
       </div>
-      {checklistItems.length === 0 ? (
-        <div className="memo-empty">
-          <span>체크리스트가 없습니다</span>
+      <ul className="memo-checklist">
+        {checklistItems.map((item, index) => (
+          <li key={index} className={`memo-item ${item.checked ? 'checked' : ''}`}>
+            <input
+              type="checkbox"
+              checked={item.checked}
+              onChange={() => toggleCheckbox(item.line)}
+            />
+            {editingItemLine === item.line ? (
+              <input
+                ref={itemInputRef}
+                type="text"
+                className="memo-item-input"
+                value={editText}
+                onChange={(e) => setEditText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSaveItem();
+                  if (e.key === 'Escape') setEditingItemLine(null);
+                }}
+                onBlur={handleSaveItem}
+              />
+            ) : (
+              <span 
+                className="memo-item-text" 
+                onClick={() => handleStartEditItem(item.line, item.text)}
+              >
+                {item.text || '\u200B'}
+              </span>
+            )}
+          </li>
+        ))}
+      </ul>
+      {isAddingItem ? (
+        <div className="memo-add-input-wrapper">
+          <input
+            ref={inputRef}
+            type="text"
+            className="memo-add-input"
+            placeholder="새 항목 입력..."
+            value={newItemText}
+            onChange={(e) => setNewItemText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleAddItem();
+              if (e.key === 'Escape') setIsAddingItem(false);
+            }}
+            onBlur={() => {
+              if (!newItemText.trim()) setIsAddingItem(false);
+            }}
+          />
+          <button className="memo-add-confirm" onClick={handleAddItem}>✓</button>
         </div>
       ) : (
-        <ul className="memo-checklist">
-          {checklistItems.map((item, index) => (
-            <li key={index} className={`memo-item ${item.checked ? 'checked' : ''}`}>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={item.checked}
-                  onChange={() => toggleCheckbox(item.line)}
-                />
-                <span className="memo-item-text">{item.text || '\u200B'}</span>
-              </label>
-            </li>
-          ))}
-        </ul>
+        <button className="memo-add-btn" onClick={handleStartAddItem}>
+          +
+        </button>
       )}
     </div>
   );

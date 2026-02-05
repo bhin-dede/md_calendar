@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { TitleBar } from "@/components/TitleBar";
 import { ToastProvider } from "@/context/ToastContext";
 import "@/styles/design-system.css";
 import "@/styles/components.css";
@@ -31,6 +32,7 @@ export default function RootLayout({
       </head>
       <body>
         <ToastProvider>
+          <TitleBar />
           <Header />
           {children}
         </ToastProvider>

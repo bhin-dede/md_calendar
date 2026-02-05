@@ -1,3 +1,71 @@
+.titlebar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 36px;
+  padding: 0 var(--space-sm);
+  background-color: var(--color-secondary);
+  border-bottom: var(--border-style);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.titlebar-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text);
+  padding-left: var(--space-sm);
+}
+
+.titlebar-controls {
+  display: flex;
+  gap: 4px;
+}
+
+.titlebar-btn {
+  width: 28px;
+  height: 24px;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.titlebar-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 2px 2px 0 var(--color-border);
+}
+
+.titlebar-btn.close:hover {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.titlebar-btn.minimize:hover {
+  background-color: var(--color-accent);
+}
+
+.titlebar-btn.maximize:hover {
+  background-color: var(--color-green);
+}
+
+.titlebar-btn.pin:hover {
+  background-color: var(--color-purple);
+  color: white;
+}
+
+.titlebar-btn.pin.active {
+  background-color: var(--color-purple);
+  color: white;
+  transform: translate(-1px, -1px);
+  box-shadow: 2px 2px 0 var(--color-border);
+}
+
 .toast-container {
   position: fixed;
   bottom: var(--space-lg);

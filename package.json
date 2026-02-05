@@ -1,9 +1,9 @@
 {
   "name": "md_cal",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 8003",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

@@ -29,14 +29,19 @@ export function Editor({ documentId }: EditorProps) {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [status, setStatus] = useState<DocumentStatus>('none');
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved');
+  const [showSaveToast, setShowSaveToast] = useState(false);
   const [currentDocId, setCurrentDocId] = useState<string | null>(documentId || null);
   const [isLoading, setIsLoading] = useState(!!documentId);
 
   const { scheduleAutoSave, cancelAutoSave } = useAutoSave({
     documentId: currentDocId,
-    onSaveStart: () => setSaveStatus('saving'),
+    onSaveStart: () => {
+      setSaveStatus('saving');
+      setShowSaveToast(true);
+    },
     onSaveSuccess: (newId: string) => {
       setSaveStatus('saved');
+      setTimeout(() => setShowSaveToast(false), 1500);
       if (newId !== currentDocId) {
         setCurrentDocId(newId);
         router.replace(`/editor?id=${newId}`);
@@ -128,7 +133,7 @@ export function Editor({ documentId }: EditorProps) {
     } else if (currentDocId) {
       triggerAutoSave({ content: newContent });
     }
-  }, [currentDocId, title, date, router, showToast, handleContentChange, triggerAutoSave]);
+  }, [currentDocId, title, date, status, router, showToast, handleContentChange, triggerAutoSave]);
 
   const handlePreviewContentChange = useCallback((newContent: string) => {
     setContent(newContent);
@@ -483,11 +488,7 @@ export function Editor({ documentId }: EditorProps) {
             ))}
           </select>
         </div>
-        <div className={`save-indicator ${saveStatus}`}>
-          <span>
-            {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? 'Saved' : 'Unsaved'}
-          </span>
-        </div>
+
         <div className="flex gap-sm">
           <button className="btn btn-secondary btn-sm" onClick={handleExport}>
             Export MD
@@ -520,6 +521,11 @@ export function Editor({ documentId }: EditorProps) {
         </div>
         <MarkdownPreview content={content} title={title} date={date} onContentChange={handlePreviewContentChange} />
       </div>
+      {showSaveToast && (
+        <div className={`save-toast ${saveStatus}`}>
+          {saveStatus === 'saving' ? 'Saving...' : 'Saved'}
+        </div>
+      )}
     </div>
   );
 }

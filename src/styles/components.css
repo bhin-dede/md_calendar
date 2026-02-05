@@ -303,16 +303,45 @@
   background-color: var(--color-surface);
 }
 
-.save-indicator {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
+.save-toast {
+  position: fixed;
+  top: var(--space-lg);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: var(--space-sm) var(--space-lg);
+  border: var(--border-style);
+  border-radius: var(--radius-sm);
   font-size: 0.875rem;
-  color: var(--color-text-muted);
+  font-weight: 600;
+  z-index: 1000;
+  animation: fadeInDown 0.3s ease;
 }
 
-.save-indicator.saving { color: var(--color-orange); }
-.save-indicator.saved { color: var(--color-green); }
+.save-toast.saving {
+  background-color: var(--color-accent);
+  color: var(--color-text);
+}
+
+.save-toast.unsaved {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.save-toast.saved {
+  background-color: var(--color-green);
+  color: white;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
 
 .document-list {
   display: flex;
@@ -493,19 +522,19 @@
 
 .calendar-doc-item {
   padding: 2px var(--space-xs);
-  background-color: var(--color-purple);
-  color: white;
+  color: var(--color-text);
   border-radius: 2px;
   font-size: 0.7rem;
-  font-weight: 500;
+  font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   cursor: pointer;
+  border: 1px solid var(--color-border);
 }
 
 .calendar-doc-item:hover {
-  background-color: var(--color-primary);
+  filter: brightness(0.9);
 }
 
 .calendar-more {

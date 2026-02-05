@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Document } from '@/lib/types';
+import { Document, STATUS_COLORS } from '@/lib/types';
 import { getDocumentsForMonth, getDateKey } from '@/lib/db';
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -80,6 +80,7 @@ function CalendarDay({ year, month, day, isOtherMonth, docs }: CalendarDayProps)
               className="calendar-doc-item"
               title={doc.title || 'Untitled'}
               onClick={(e) => handleDocClick(e, doc.id)}
+              style={{ backgroundColor: STATUS_COLORS[doc.status] }}
             >
               {doc.title || 'Untitled'}
             </div>

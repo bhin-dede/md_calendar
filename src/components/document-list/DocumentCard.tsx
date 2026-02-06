@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Document, STATUS_LABELS, STATUS_COLORS } from '@/lib/types';
+import { DocumentSummary, STATUS_LABELS, STATUS_COLORS } from '@/lib/types';
 import { formatDateTime } from '@/lib/db';
 
 const COLORS = [
@@ -24,29 +24,13 @@ function getColorForDoc(id: string): string {
   return COLORS[Math.abs(hash) % COLORS.length];
 }
 
-function getContentPreview(content: string, maxLength = 150): string {
-  const stripped = content
-    .replace(/^#+\s+/gm, '')
-    .replace(/\*\*/g, '')
-    .replace(/\*/g, '')
-    .replace(/`/g, '')
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-    .replace(/!\[[^\]]*\]\([^)]+\)/g, '')
-    .replace(/\n+/g, ' ')
-    .trim();
-
-  return stripped.length > maxLength
-    ? stripped.substring(0, maxLength) + '...'
-    : stripped;
-}
-
 interface DocumentCardProps {
-  document: Document;
-  onExport: (doc: Document) => void;
-  onDelete: (doc: Document) => void;
+  document: DocumentSummary;
+  onExport: (doc: DocumentSummary) => void;
+  onDelete: (doc: DocumentSummary) => void;
 }
 
-export function DocumentCard({ document, onExport, onDelete }: DocumentCardProps) {
+export const DocumentCard = React.memo(function DocumentCard({ document, onExport, onDelete }: DocumentCardProps) {
   return (
     <Link href={`/editor?id=${document.id}`} className="document-card">
       <div
@@ -66,9 +50,6 @@ export function DocumentCard({ document, onExport, onDelete }: DocumentCardProps
               {STATUS_LABELS[document.status]}
             </span>
           )}
-        </div>
-        <div className="document-card-preview">
-          {getContentPreview(document.content) || 'No content'}
         </div>
         <div className="document-card-meta">
           <span>Created: {formatDateTime(document.createdAt)}</span>
@@ -99,4 +80,4 @@ export function DocumentCard({ document, onExport, onDelete }: DocumentCardProps
       </div>
     </Link>
   );
-}
+});

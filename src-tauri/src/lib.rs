@@ -87,6 +87,18 @@ pub struct DocumentMeta {
     pub updated_at: i64,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct DocumentSummary {
+    pub id: String,
+    pub title: String,
+    pub date: i64,
+    pub status: String,
+    #[serde(rename = "createdAt")]
+    pub created_at: i64,
+    #[serde(rename = "updatedAt")]
+    pub updated_at: i64,
+}
+
 fn default_status() -> String {
     "none".to_string()
 }
@@ -353,6 +365,75 @@ fn get_all_documents(app: tauri::AppHandle) -> Result<Vec<Document>, String> {
 }
 
 #[tauri::command]
+fn get_all_document_summaries(app: tauri::AppHandle) -> Result<Vec<DocumentSummary>, String> {
+    let docs_dir = get_documents_dir(&app)?;
+    let mut summaries = Vec::new();
+
+    let entries = fs::read_dir(&docs_dir).map_err(|e| e.to_string())?;
+
+    for entry in entries {
+        let entry = entry.map_err(|e| e.to_string())?;
+        let path = entry.path();
+
+        if path.extension().map_or(false, |ext| ext == "json")
+            && path
+                .file_name()
+                .map_or(false, |n| n.to_string_lossy().ends_with(".meta.json"))
+        {
+            let filename = path
+                .file_name()
+                .and_then(|s| s.to_str())
+                .ok_or("Invalid filename")?;
+            let id = filename
+                .strip_suffix(".meta.json")
+                .ok_or("Invalid meta filename")?
+                .to_string();
+
+            let meta_json = fs::read_to_string(&path).map_err(|e| e.to_string())?;
+            if let Ok(meta) = serde_json::from_str::<DocumentMeta>(&meta_json) {
+                summaries.push(DocumentSummary {
+                    id,
+                    title: meta.title,
+                    date: meta.date,
+                    status: meta.status,
+                    created_at: meta.created_at,
+                    updated_at: meta.updated_at,
+                });
+            }
+        }
+    }
+
+    summaries.sort_by(|a, b| b.updated_at.cmp(&a.updated_at));
+
+    Ok(summaries)
+}
+
+#[tauri::command]
+fn get_document_summaries_for_month(
+    app: tauri::AppHandle,
+    year: i32,
+    month: u32,
+) -> Result<Vec<DocumentSummary>, String> {
+    let all_summaries = get_all_document_summaries(app)?;
+
+    let filtered: Vec<DocumentSummary> = all_summaries
+        .into_iter()
+        .filter(|doc| {
+            let date = chrono::DateTime::from_timestamp_millis(doc.date);
+            if let Some(dt) = date {
+                let dt = dt.with_timezone(&chrono::Utc);
+                dt.format("%Y").to_string().parse::<i32>().unwrap_or(0) == year
+                    && dt.format("%m").to_string().parse::<u32>().unwrap_or(0) == month
+            } else {
+                false
+            }
+        })
+        .collect();
+
+    Ok(filtered)
+}
+
+#[tauri::command]
 fn get_documents_for_month(
     app: tauri::AppHandle,
     year: i32,
@@ -372,6 +453,22 @@ fn get_documents_for_month(
                 false
             }
         })
+        .collect();
+
+    Ok(filtered)
+}
+
+#[tauri::command]
+fn search_document_summaries(
+    app: tauri::AppHandle,
+    query: String,
+) -> Result<Vec<DocumentSummary>, String> {
+    let all_summaries = get_all_document_summaries(app)?;
+    let query_lower = query.to_lowercase();
+
+    let filtered: Vec<DocumentSummary> = all_summaries
+        .into_iter()
+        .filter(|doc| doc.title.to_lowercase().contains(&query_lower))
         .collect();
 
     Ok(filtered)
@@ -399,6 +496,28 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
+            if let Some(window) = app.get_webview_window("main") {
+                let icon_path = app
+                    .path()
+                    .resource_dir()
+                    .ok()
+                    .map(|p| p.join("icons/icon.png"));
+
+                if let Some(path) = icon_path {
+                    if path.exists() {
+                        if let Ok(bytes) = std::fs::read(&path) {
+                            if let Ok(img) = image::load_from_memory(&bytes) {
+                                let rgba = img.to_rgba8();
+                                let (width, height) = rgba.dimensions();
+                                let icon =
+                                    tauri::image::Image::new_owned(rgba.into_raw(), width, height);
+                                let _ = window.set_icon(icon);
+                            }
+                        }
+                    }
+                }
+            }
+
             if cfg!(debug_assertions) {
                 app.handle().plugin(
                     tauri_plugin_log::Builder::default()
@@ -414,8 +533,11 @@ pub fn run() {
             update_document,
             delete_document,
             get_all_documents,
+            get_all_document_summaries,
             get_documents_for_month,
+            get_document_summaries_for_month,
             search_documents,
+            search_document_summaries,
             get_documents_folder,
             set_documents_folder,
         ])

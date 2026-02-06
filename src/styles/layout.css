@@ -293,3 +293,23 @@
     flex: 1;
   }
 }
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) 0;
+  margin-top: 0;
+}
+
+.pagination-info {
+  font-size: var(--font-sm);
+  color: var(--color-text);
+}
+
+.pagination .btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

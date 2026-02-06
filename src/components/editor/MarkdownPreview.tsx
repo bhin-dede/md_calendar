@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { marked } from 'marked';
 import hljs from 'highlight.js';
+import DOMPurify from 'dompurify';
 
 marked.setOptions({
   breaks: true,
@@ -52,15 +53,11 @@ export function MarkdownPreview({ content, title, date, onContentChange }: Markd
   const fullscreenRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const renderMarkdown = async () => {
-      const preprocessed = (content || '').replace(/^(\s*[-*+]\s*\[[ x]\])\s*$/gm, '$1 ​');
-      const rawHtml = marked.parse(preprocessed) as string;
-      const DOMPurify = (await import('dompurify')).default;
-      const sanitized = DOMPurify.sanitize(rawHtml);
-      const enabledCheckboxes = sanitized.replace(/disabled=""\s*/g, '');
-      setHtml(enabledCheckboxes);
-    };
-    renderMarkdown();
+    const preprocessed = (content || '').replace(/^(\s*[-*+]\s*\[[ x]\])\s*$/gm, '$1 ​');
+    const rawHtml = marked.parse(preprocessed) as string;
+    const sanitized = DOMPurify.sanitize(rawHtml);
+    const enabledCheckboxes = sanitized.replace(/disabled=""\s*/g, '');
+    setHtml(enabledCheckboxes);
   }, [content]);
 
   useEffect(() => {

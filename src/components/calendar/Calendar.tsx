@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, memo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Document, STATUS_COLORS } from '@/lib/types';
-import { getDocumentsForMonth, getDateKey } from '@/lib/db';
+import { DocumentSummary, STATUS_COLORS } from '@/lib/types';
+import { getDocumentSummariesForMonth, getDateKey } from '@/lib/db';
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = [
@@ -27,8 +27,8 @@ function isToday(year: number, month: number, day: number): boolean {
     today.getDate() === day;
 }
 
-function groupDocumentsByDate(docs: Document[]): Record<string, Document[]> {
-  const grouped: Record<string, Document[]> = {};
+function groupDocumentsByDate(docs: DocumentSummary[]): Record<string, DocumentSummary[]> {
+  const grouped: Record<string, DocumentSummary[]> = {};
   docs.forEach(doc => {
     const key = getDateKey(doc.date);
     if (!grouped[key]) {
@@ -44,10 +44,10 @@ interface CalendarDayProps {
   month: number;
   day: number;
   isOtherMonth: boolean;
-  docs: Document[];
+  docs: DocumentSummary[];
 }
 
-function CalendarDay({ year, month, day, isOtherMonth, docs }: CalendarDayProps) {
+const CalendarDay = memo(function CalendarDay({ year, month, day, isOtherMonth, docs }: CalendarDayProps) {
   const router = useRouter();
   const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
@@ -92,18 +92,18 @@ function CalendarDay({ year, month, day, isOtherMonth, docs }: CalendarDayProps)
       )}
     </div>
   );
-}
+});
 
 export function Calendar() {
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
-  const [docsByDate, setDocsByDate] = useState<Record<string, Document[]>>({});
+  const [docsByDate, setDocsByDate] = useState<Record<string, DocumentSummary[]>>({});
   const [isLoading, setIsLoading] = useState(true);
 
   const loadDocuments = useCallback(async () => {
     setIsLoading(true);
     try {
-      const docs = await getDocumentsForMonth(currentYear, currentMonth);
+      const docs = await getDocumentSummariesForMonth(currentYear, currentMonth);
       setDocsByDate(groupDocumentsByDate(docs));
     } catch (error) {
       console.error('Failed to load documents:', error);

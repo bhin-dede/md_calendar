@@ -6,31 +6,35 @@ import { useRouter } from 'next/navigation';
 import { DocumentCard } from './DocumentCard';
 import { ConfirmModal } from '@/components/Modal';
 import { useToast } from '@/context/ToastContext';
-import { Document, STATUS_LABELS, STATUS_COLORS } from '@/lib/types';
-import { getAllDocuments, searchDocuments, deleteDocument, createDocument, formatDate } from '@/lib/db';
+import { DocumentSummary, STATUS_LABELS, STATUS_COLORS } from '@/lib/types';
+import { getAllDocumentSummaries, searchDocumentSummaries, deleteDocument, createDocument, formatDate, getDocument } from '@/lib/db';
 
 type ViewMode = 'grid' | 'table';
 type SortField = 'title' | 'date' | 'status' | 'updatedAt' | 'createdAt';
 type SortOrder = 'asc' | 'desc';
 
+const PAGE_SIZE = 12;
+
 export function DocumentList() {
   const router = useRouter();
   const { showToast } = useToast();
-  const [documents, setDocuments] = useState<Document[]>([]);
+  const [documents, setDocuments] = useState<DocumentSummary[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [deleteTarget, setDeleteTarget] = useState<Document | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<DocumentSummary | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [sortField, setSortField] = useState<SortField>('updatedAt');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const loadDocuments = useCallback(async () => {
     setIsLoading(true);
     try {
       const docs = searchQuery
-        ? await searchDocuments(searchQuery)
-        : await getAllDocuments();
+        ? await searchDocumentSummaries(searchQuery)
+        : await getAllDocumentSummaries();
       setDocuments(docs);
+      setCurrentPage(1);
     } catch (error) {
       console.error('Failed to load documents:', error);
       showToast('Failed to load documents', 'error');
@@ -85,6 +89,13 @@ export function DocumentList() {
     return sorted;
   }, [documents, sortField, sortOrder]);
 
+  const paginatedDocuments = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return sortedDocuments.slice(start, start + PAGE_SIZE);
+  }, [sortedDocuments, currentPage]);
+
+  const totalPages = Math.ceil(sortedDocuments.length / PAGE_SIZE);
+
   const handleSort = (field: SortField) => {
     if (sortField === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -99,18 +110,28 @@ export function DocumentList() {
     return sortOrder === 'asc' ? '↑' : '↓';
   };
 
-  const handleExport = (doc: Document) => {
-    const filename = (doc.title || 'untitled').replace(/[^a-zA-Z0-9\uAC00-\uD7AF]/g, '_') + '.md';
-    const blob = new Blob([doc.content], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
+  const handleExport = async (doc: DocumentSummary) => {
+    try {
+      const fullDoc = await getDocument(doc.id);
+      if (!fullDoc) {
+        showToast('Document not found', 'error');
+        return;
+      }
+      const filename = (fullDoc.title || 'untitled').replace(/[^a-zA-Z0-9\uAC00-\uD7AF]/g, '_') + '.md';
+      const blob = new Blob([fullDoc.content], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
 
-    const a = window.document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
+      const a = window.document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
 
-    URL.revokeObjectURL(url);
-    showToast('Document exported', 'success');
+      URL.revokeObjectURL(url);
+      showToast('Document exported', 'success');
+    } catch (error) {
+      console.error('Export failed:', error);
+      showToast('Failed to export document', 'error');
+    }
   };
 
   const handleDelete = async () => {
@@ -193,7 +214,7 @@ export function DocumentList() {
           </tr>
         </thead>
         <tbody>
-          {sortedDocuments.map((doc) => (
+          {paginatedDocuments.map((doc) => (
             <tr key={doc.id} onClick={() => router.push(`/editor?id=${doc.id}`)} className="clickable-row">
               <td className="title-cell">{doc.title || 'Untitled'}</td>
               <td>
@@ -254,7 +275,7 @@ export function DocumentList() {
 
     return (
       <div className="list-grid">
-        {sortedDocuments.map((doc) => (
+        {paginatedDocuments.map((doc) => (
           <DocumentCard
             key={doc.id}
             document={doc}
@@ -315,6 +336,28 @@ export function DocumentList() {
       </div>
 
       <div className="list-content">{renderContent()}</div>
+
+      {totalPages > 1 && (
+        <div className="pagination">
+          <button
+            className="btn btn-sm"
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+          >
+            ← Prev
+          </button>
+          <span className="pagination-info">
+            Page {currentPage} of {totalPages} ({sortedDocuments.length} documents)
+          </span>
+          <button
+            className="btn btn-sm"
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+          >
+            Next →
+          </button>
+        </div>
+      )}
 
       <ConfirmModal
         isOpen={!!deleteTarget}

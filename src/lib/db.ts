@@ -1,4 +1,4 @@
-import { Document, DocumentInput } from './types';
+import { Document, DocumentInput, DocumentSummary } from './types';
 import { invoke } from '@tauri-apps/api/core';
 
 export async function initDB(): Promise<void> {
@@ -37,12 +37,24 @@ export async function getAllDocuments(): Promise<Document[]> {
   return invoke<Document[]>('get_all_documents');
 }
 
+export async function getAllDocumentSummaries(): Promise<DocumentSummary[]> {
+  return invoke<DocumentSummary[]>('get_all_document_summaries');
+}
+
 export async function getDocumentsForMonth(year: number, month: number): Promise<Document[]> {
   return invoke<Document[]>('get_documents_for_month', { year, month: month + 1 });
 }
 
+export async function getDocumentSummariesForMonth(year: number, month: number): Promise<DocumentSummary[]> {
+  return invoke<DocumentSummary[]>('get_document_summaries_for_month', { year, month: month + 1 });
+}
+
 export async function searchDocuments(query: string): Promise<Document[]> {
   return invoke<Document[]>('search_documents', { query });
+}
+
+export async function searchDocumentSummaries(query: string): Promise<DocumentSummary[]> {
+  return invoke<DocumentSummary[]>('search_document_summaries', { query });
 }
 
 export async function getDocumentsFolder(): Promise<string | null> {

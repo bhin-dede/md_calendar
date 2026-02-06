@@ -26,6 +26,15 @@ export interface Document {
   updatedAt: number;
 }
 
+export interface DocumentSummary {
+  id: string;
+  title: string;
+  date: number;
+  status: DocumentStatus;
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface DocumentInput {
   title?: string;
   content?: string;

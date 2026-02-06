@@ -192,6 +192,17 @@
   display: flex;
   gap: var(--space-sm);
   flex-wrap: wrap;
+  align-items: center;
+}
+
+.filter-select {
+  min-width: 120px;
+  padding: var(--space-xs) var(--space-sm);
+}
+
+.filter-date {
+  width: 140px;
+  padding: var(--space-xs) var(--space-sm);
 }
 
 .list-search {

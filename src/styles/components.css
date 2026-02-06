@@ -97,6 +97,30 @@
   overflow: hidden;
 }
 
+.memo-filters {
+  display: flex;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-sm);
+}
+
+.memo-filter-select {
+  flex: 1;
+  padding: var(--space-xs);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  background: var(--color-surface);
+}
+
+.memo-filter-date {
+  width: 110px;
+  padding: var(--space-xs);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  background: var(--color-surface);
+}
+
 .memo-empty {
   display: flex;
   flex-direction: column;

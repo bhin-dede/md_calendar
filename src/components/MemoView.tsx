@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useMemoMode } from '@/context/MemoModeContext';
 import { getAllDocuments, getDocument, updateDocument, createDocument } from '@/lib/db';
-import { Document, DocumentStatus } from '@/lib/types';
+import { Document, DocumentStatus, STATUS_LABELS } from '@/lib/types';
 
 const STATUS_ICONS: Record<DocumentStatus, string> = {
   none: '−',
@@ -31,6 +31,9 @@ export function MemoView() {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editingItemLine, setEditingItemLine] = useState<number | null>(null);
   const [editText, setEditText] = useState('');
+  const [statusFilter, setStatusFilter] = useState<DocumentStatus | 'all'>('all');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
   const itemInputRef = useRef<HTMLInputElement>(null);
@@ -180,11 +183,55 @@ export function MemoView() {
     ));
   };
 
+  const filteredDocs = documents.filter(doc => {
+    if (statusFilter !== 'all' && doc.status !== statusFilter) return false;
+    if (dateFrom) {
+      const fromDate = new Date(dateFrom).setHours(0, 0, 0, 0);
+      if (doc.date < fromDate) return false;
+    }
+    if (dateTo) {
+      const toDate = new Date(dateTo).setHours(23, 59, 59, 999);
+      if (doc.date > toDate) return false;
+    }
+    return true;
+  });
+
+  const handleContainerClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLInputElement;
+    if (target.type !== 'date' && document.activeElement?.getAttribute('type') === 'date') {
+      (document.activeElement as HTMLElement).blur();
+    }
+  };
+
   if (!selectedDocId) {
     return (
-      <div className="memo-view">
+      <div className="memo-view" onClick={handleContainerClick}>
+        <div className="memo-filters">
+          <select
+            className="memo-filter-select"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as DocumentStatus | 'all')}
+          >
+            <option value="all">전체</option>
+            {(Object.keys(STATUS_LABELS) as DocumentStatus[]).map(status => (
+              <option key={status} value={status}>{STATUS_LABELS[status]}</option>
+            ))}
+          </select>
+          <input
+            type="date"
+            className="memo-filter-date"
+            value={dateFrom}
+            onChange={(e) => { setDateFrom(e.target.value); e.target.blur(); }}
+          />
+          <input
+            type="date"
+            className="memo-filter-date"
+            value={dateTo}
+            onChange={(e) => { setDateTo(e.target.value); e.target.blur(); }}
+          />
+        </div>
         <div className="memo-doc-list">
-          {documents.map((doc) => (
+          {filteredDocs.map((doc) => (
             <div
               key={doc.id}
               className="memo-doc-item"

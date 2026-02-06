@@ -5,13 +5,15 @@ import { useMemoMode } from '@/context/MemoModeContext';
 import { getAllDocuments, getDocument, updateDocument, createDocument } from '@/lib/db';
 import { Document, DocumentStatus } from '@/lib/types';
 
-const STATUS_ICONS: Record<DocumentStatus, string | null> = {
-  none: null,
+const STATUS_ICONS: Record<DocumentStatus, string> = {
+  none: '−',
   ready: '□',
   in_progress: '→',
   paused: '⏸',
   completed: '✓',
 };
+
+const STATUS_CYCLE: DocumentStatus[] = ['ready', 'in_progress', 'paused', 'completed'];
 
 interface ChecklistItem {
   text: string;
@@ -158,28 +160,50 @@ export function MemoView() {
     setEditingItemLine(null);
   };
 
+  const handleCycleStatus = async (doc: Document, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    const currentStatus = doc.status || 'none';
+    let nextStatus: DocumentStatus;
+    
+    if (currentStatus === 'none') {
+      nextStatus = 'ready';
+    } else {
+      const currentIndex = STATUS_CYCLE.indexOf(currentStatus);
+      const nextIndex = (currentIndex + 1) % STATUS_CYCLE.length;
+      nextStatus = STATUS_CYCLE[nextIndex];
+    }
+    
+    await updateDocument(doc.id, { status: nextStatus });
+    setDocuments(documents.map(d => 
+      d.id === doc.id ? { ...d, status: nextStatus } : d
+    ));
+  };
+
   if (!selectedDocId) {
     return (
       <div className="memo-view">
         <div className="memo-doc-list">
           {documents.map((doc) => (
-            <button
+            <div
               key={doc.id}
               className="memo-doc-item"
               onClick={() => setSelectedDocId(doc.id)}
             >
               <div className="memo-doc-info">
-                {STATUS_ICONS[doc.status || 'none'] && (
-                  <span className={`memo-status-icon status-${doc.status}`}>
-                    {STATUS_ICONS[doc.status || 'none']}
-                  </span>
-                )}
+                <span 
+                  className={`memo-status-icon status-${doc.status || 'none'}`}
+                  onClick={(e) => handleCycleStatus(doc, e)}
+                  title="클릭하여 상태 변경"
+                >
+                  {STATUS_ICONS[doc.status || 'none']}
+                </span>
                 <span className="memo-doc-title">{doc.title || 'Untitled'}</span>
               </div>
               <span className="memo-doc-date">
                 {new Date(doc.date).toLocaleDateString('ko-KR')}
               </span>
-            </button>
+            </div>
           ))}
         </div>
         <button className="memo-add-btn" onClick={handleCreateDocument}>

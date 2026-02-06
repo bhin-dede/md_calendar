@@ -226,7 +226,7 @@
 .memo-doc-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  gap: 6px;
   flex: 1;
   overflow-y: auto;
 }
@@ -235,7 +235,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--space-md);
+  padding: 10px 12px;
   background-color: var(--color-surface);
   border: var(--border-style);
   border-radius: var(--radius-sm);
@@ -256,15 +256,31 @@
 }
 
 .memo-status-icon {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   border: var(--border-style);
   border-radius: var(--radius-sm);
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   flex-shrink: 0;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.memo-status-icon:hover {
+  transform: scale(1.1);
+  box-shadow: 2px 2px 0 var(--color-border);
+}
+
+.memo-status-icon:active {
+  transform: scale(0.95);
+}
+
+.memo-status-icon.status-none {
+  background-color: #ccc;
+  color: #666;
 }
 
 .memo-status-icon.status-ready {
@@ -277,7 +293,7 @@
 }
 
 .memo-status-icon.status-paused {
-  background-color: transparent;
+  background-color: var(--color-surface);
 }
 
 .memo-status-icon.status-completed {

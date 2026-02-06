@@ -3,8 +3,18 @@
 import React, { useState, useEffect, useCallback, memo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { DocumentSummary, STATUS_COLORS } from '@/lib/types';
-import { getDocumentSummariesForMonth, getDateKey } from '@/lib/db';
+import { DocumentSummary, DocumentStatus, STATUS_COLORS } from '@/lib/types';
+import { getDocumentSummariesForMonth, getDateKey, updateDocument } from '@/lib/db';
+
+const STATUS_ICONS: Record<DocumentStatus, string> = {
+  none: '−',
+  ready: '',
+  in_progress: '→',
+  paused: '⏸',
+  completed: '✓',
+};
+
+const STATUS_CYCLE: DocumentStatus[] = ['ready', 'in_progress', 'paused', 'completed'];
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = [
@@ -45,9 +55,10 @@ interface CalendarDayProps {
   day: number;
   isOtherMonth: boolean;
   docs: DocumentSummary[];
+  onStatusChange: (docId: string, newStatus: DocumentStatus) => void;
 }
 
-const CalendarDay = memo(function CalendarDay({ year, month, day, isOtherMonth, docs }: CalendarDayProps) {
+const CalendarDay = memo(function CalendarDay({ year, month, day, isOtherMonth, docs, onStatusChange }: CalendarDayProps) {
   const router = useRouter();
   const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
@@ -69,6 +80,20 @@ const CalendarDay = memo(function CalendarDay({ year, month, day, isOtherMonth, 
     router.push(`/editor?id=${docId}`);
   };
 
+  const handleStatusClick = (e: React.MouseEvent, doc: DocumentSummary) => {
+    e.stopPropagation();
+    const currentStatus = doc.status || 'none';
+    let nextStatus: DocumentStatus;
+    if (currentStatus === 'none') {
+      nextStatus = 'ready';
+    } else {
+      const currentIndex = STATUS_CYCLE.indexOf(currentStatus);
+      const nextIndex = (currentIndex + 1) % STATUS_CYCLE.length;
+      nextStatus = STATUS_CYCLE[nextIndex];
+    }
+    onStatusChange(doc.id, nextStatus);
+  };
+
   return (
     <div className={classNames} onClick={handleDayClick} style={{ cursor: isOtherMonth ? 'default' : 'pointer' }}>
       <div className="calendar-day-number">{day}</div>
@@ -79,10 +104,18 @@ const CalendarDay = memo(function CalendarDay({ year, month, day, isOtherMonth, 
               key={doc.id}
               className="calendar-doc-item"
               title={doc.title || 'Untitled'}
-              onClick={(e) => handleDocClick(e, doc.id)}
               style={{ backgroundColor: STATUS_COLORS[doc.status] }}
             >
-              {doc.title || 'Untitled'}
+              <span 
+                className="calendar-status-icon"
+                onClick={(e) => handleStatusClick(e, doc)}
+                title="상태 변경"
+              >
+                {STATUS_ICONS[doc.status || 'none']}
+              </span>
+              <span className="calendar-doc-title" onClick={(e) => handleDocClick(e, doc.id)}>
+                {doc.title || 'Untitled'}
+              </span>
             </div>
           ))}
           {docs.length > 3 && (
@@ -114,6 +147,19 @@ export function Calendar() {
   useEffect(() => {
     loadDocuments();
   }, [loadDocuments]);
+
+  const handleStatusChange = async (docId: string, newStatus: DocumentStatus) => {
+    await updateDocument(docId, { status: newStatus });
+    setDocsByDate(prev => {
+      const updated = { ...prev };
+      for (const key in updated) {
+        updated[key] = updated[key].map(doc =>
+          doc.id === docId ? { ...doc, status: newStatus } : doc
+        );
+      }
+      return updated;
+    });
+  };
 
   const navigateMonth = (delta: number) => {
     let newMonth = currentMonth + delta;
@@ -156,6 +202,7 @@ export function Calendar() {
           day={day}
           isOtherMonth={true}
           docs={docsByDate[dateKey] || []}
+          onStatusChange={handleStatusChange}
         />
       );
     }
@@ -170,6 +217,7 @@ export function Calendar() {
           day={day}
           isOtherMonth={false}
           docs={docsByDate[dateKey] || []}
+          onStatusChange={handleStatusChange}
         />
       );
     }
@@ -189,6 +237,7 @@ export function Calendar() {
           day={day}
           isOtherMonth={true}
           docs={docsByDate[dateKey] || []}
+          onStatusChange={handleStatusChange}
         />
       );
     }

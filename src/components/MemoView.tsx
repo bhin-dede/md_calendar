@@ -7,7 +7,7 @@ import { Document, DocumentStatus, STATUS_LABELS } from '@/lib/types';
 
 const STATUS_ICONS: Record<DocumentStatus, string> = {
   none: '−',
-  ready: '□',
+  ready: '',
   in_progress: '→',
   paused: '⏸',
   completed: '✓',

@@ -321,8 +321,9 @@
 }
 
 .memo-status-icon.status-completed {
+
   background-color: var(--color-green);
-  color: white;
+  color: black;
 }
 
 .memo-doc-title {
@@ -1287,4 +1288,33 @@
   flex: 1;
   padding: var(--space-xl);
   overflow-y: auto;
+}
+
+.calendar-doc-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.calendar-status-icon {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  cursor: pointer;
+  border-radius: 2px;
+  background: white;
+}
+
+.calendar-status-icon:hover {
+  background: rgba(0,0,0,0.1);
+}
+
+.calendar-doc-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

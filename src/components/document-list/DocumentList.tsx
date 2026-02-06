@@ -26,9 +26,6 @@ export function DocumentList() {
   const [sortField, setSortField] = useState<SortField>('updatedAt');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [currentPage, setCurrentPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState<DocumentStatus | 'all'>('all');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
 
   const loadDocuments = useCallback(async () => {
     setIsLoading(true);
@@ -56,23 +53,10 @@ export function DocumentList() {
     return () => clearTimeout(timer);
   }, [searchQuery, loadDocuments]);
 
-  const filteredDocuments = useMemo(() => {
-    return documents.filter(doc => {
-      if (statusFilter !== 'all' && doc.status !== statusFilter) return false;
-      if (dateFrom) {
-        const fromDate = new Date(dateFrom).setHours(0, 0, 0, 0);
-        if (doc.date < fromDate) return false;
-      }
-      if (dateTo) {
-        const toDate = new Date(dateTo).setHours(23, 59, 59, 999);
-        if (doc.date > toDate) return false;
-      }
-      return true;
-    });
-  }, [documents, statusFilter, dateFrom, dateTo]);
+  
 
   const sortedDocuments = useMemo(() => {
-    const sorted = [...filteredDocuments].sort((a, b) => {
+    const sorted = [...documents].sort((a, b) => {
       let aVal: string | number;
       let bVal: string | number;
 
@@ -105,7 +89,7 @@ export function DocumentList() {
       return 0;
     });
     return sorted;
-  }, [filteredDocuments, sortField, sortOrder]);
+  }, [documents, sortField, sortOrder]);
 
   const paginatedDocuments = useMemo(() => {
     const start = (currentPage - 1) * PAGE_SIZE;
@@ -305,15 +289,8 @@ export function DocumentList() {
     );
   };
 
-  const handleContainerClick = (e: React.MouseEvent) => {
-    const target = e.target as HTMLInputElement;
-    if (target.type !== 'date' && document.activeElement?.getAttribute('type') === 'date') {
-      (document.activeElement as HTMLElement).blur();
-    }
-  };
-
   return (
-    <div className="app-container view-list" onClick={handleContainerClick}>
+    <div className="app-container view-list">
       <div className="list-header">
         <div className="flex items-center gap-md">
           <h2 className="page-title">Documents</h2>
@@ -335,40 +312,6 @@ export function DocumentList() {
           </div>
         </div>
         <div className="flex items-center gap-md">
-          <div className="list-filters">
-            <select
-              className="input filter-select"
-              value={statusFilter}
-              onChange={(e) => { setStatusFilter(e.target.value as DocumentStatus | 'all'); setCurrentPage(1); }}
-            >
-              <option value="all">모든 상태</option>
-              {(Object.keys(STATUS_LABELS) as DocumentStatus[]).map(status => (
-                <option key={status} value={status}>{STATUS_LABELS[status]}</option>
-              ))}
-            </select>
-            <input
-              type="date"
-              className="input filter-date"
-              value={dateFrom}
-              onChange={(e) => { setDateFrom(e.target.value); setCurrentPage(1); e.target.blur(); }}
-              title="시작 날짜"
-            />
-            <input
-              type="date"
-              className="input filter-date"
-              value={dateTo}
-              onChange={(e) => { setDateTo(e.target.value); setCurrentPage(1); e.target.blur(); }}
-              title="종료 날짜"
-            />
-            {(statusFilter !== 'all' || dateFrom || dateTo) && (
-              <button
-                className="btn btn-sm"
-                onClick={() => { setStatusFilter('all'); setDateFrom(''); setDateTo(''); setCurrentPage(1); }}
-              >
-                초기화
-              </button>
-            )}
-          </div>
           <div className="search-box list-search">
             <span className="search-box-icon">&#128269;</span>
             <input

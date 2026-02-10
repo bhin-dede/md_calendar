@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { DocumentSummary, STATUS_LABELS, STATUS_COLORS } from '@/lib/types';
-import { formatDateTime } from '@/lib/db';
+import { formatDateTime, formatDateRange } from '@/lib/db';
 
 const COLORS = [
   'var(--color-primary)',
@@ -52,7 +52,7 @@ export const DocumentCard = React.memo(function DocumentCard({ document, onExpor
           )}
         </div>
         <div className="document-card-meta">
-          <span>Created: {formatDateTime(document.createdAt)}</span>
+          <span>{formatDateRange(document.startDate, document.endDate)}</span>
           <span>Modified: {formatDateTime(document.updatedAt)}</span>
         </div>
       </div>

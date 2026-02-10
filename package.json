@@ -1,6 +1,6 @@
 {
   "name": "md_cal",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "private": true,
   "scripts": {
     "dev": "next dev -p 8003",
@@ -16,17 +16,20 @@
     "@tauri-apps/plugin-dialog": "^2.6.0",
     "@tauri-apps/plugin-fs": "^2.4.5",
     "@types/dompurify": "^3.0.5",
+    "date-fns": "^4.1.0",
     "dompurify": "^3.3.1",
     "highlight.js": "^11.11.1",
     "marked": "^17.0.1",
     "next": "16.1.6",
     "react": "19.2.3",
+    "react-big-calendar": "^1.19.4",
     "react-dom": "19.2.3"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.10.0",
     "@types/node": "^20",
     "@types/react": "^19",
+    "@types/react-big-calendar": "^1.16.3",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",

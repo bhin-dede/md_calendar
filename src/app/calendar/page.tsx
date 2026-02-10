@@ -1,7 +1,7 @@
 'use client';
 
-import { Calendar } from '@/components/calendar/Calendar';
+import { BigCalendar } from '@/components/calendar/BigCalendar';
 
 export default function CalendarPage() {
-  return <Calendar />;
+  return <BigCalendar />;
 }

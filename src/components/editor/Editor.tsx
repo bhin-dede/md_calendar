@@ -22,11 +22,13 @@ export function Editor({ documentId }: EditorProps) {
   const { showToast } = useToast();
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const datePickerRef = useRef<HTMLInputElement>(null);
+  const startDateRef = useRef<HTMLInputElement>(null);
+  const endDateRef = useRef<HTMLInputElement>(null);
   const [document, setDocument] = useState<Document | null>(null);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
   const [status, setStatus] = useState<DocumentStatus>('none');
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved');
   const [showSaveToast, setShowSaveToast] = useState(false);
@@ -62,9 +64,12 @@ export function Editor({ documentId }: EditorProps) {
           setDocument(doc);
           setTitle(doc.title);
           setContent(doc.content);
-          const d = new Date(doc.date);
-          const localDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-          setDate(localDate);
+          const sd = new Date(doc.startDate);
+          const ed = new Date(doc.endDate);
+          const localStartDate = `${sd.getFullYear()}-${String(sd.getMonth() + 1).padStart(2, '0')}-${String(sd.getDate()).padStart(2, '0')}`;
+          const localEndDate = `${ed.getFullYear()}-${String(ed.getMonth() + 1).padStart(2, '0')}-${String(ed.getDate()).padStart(2, '0')}`;
+          setStartDate(localStartDate);
+          setEndDate(localEndDate);
           setStatus(doc.status || 'none');
           setCurrentDocId(doc.id);
         } else {
@@ -75,7 +80,8 @@ export function Editor({ documentId }: EditorProps) {
       } else {
         const dateParam = searchParams.get('date');
         if (dateParam) {
-          setDate(dateParam);
+          setStartDate(dateParam);
+          setEndDate(dateParam);
         }
         setIsLoading(false);
       }
@@ -85,8 +91,11 @@ export function Editor({ documentId }: EditorProps) {
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (datePickerRef.current && !datePickerRef.current.contains(e.target as Node)) {
-        datePickerRef.current.blur();
+      if (startDateRef.current && !startDateRef.current.contains(e.target as Node)) {
+        startDateRef.current.blur();
+      }
+      if (endDateRef.current && !endDateRef.current.contains(e.target as Node)) {
+        endDateRef.current.blur();
       }
     };
     window.document.addEventListener('mousedown', handleClickOutside);
@@ -99,17 +108,18 @@ export function Editor({ documentId }: EditorProps) {
     setContent(newContent);
   }, []);
 
-  const triggerAutoSave = useCallback((updates?: { title?: string; content?: string; date?: string; status?: DocumentStatus }) => {
+  const triggerAutoSave = useCallback((updates?: { title?: string; content?: string; startDate?: string; endDate?: string; status?: DocumentStatus }) => {
     if (currentDocId) {
       setSaveStatus('unsaved');
       scheduleAutoSave({
         title: updates?.title ?? title,
         content: updates?.content ?? content,
-        date: new Date(updates?.date ?? date).getTime(),
+        startDate: new Date(updates?.startDate ?? startDate).getTime(),
+        endDate: new Date(updates?.endDate ?? endDate).getTime(),
         status: updates?.status ?? status,
       });
     }
-  }, [currentDocId, title, content, date, status, scheduleAutoSave]);
+  }, [currentDocId, title, content, startDate, endDate, status, scheduleAutoSave]);
 
   const handleInput = useCallback(async () => {
     handleContentChange();
@@ -120,7 +130,8 @@ export function Editor({ documentId }: EditorProps) {
         const doc = await createDocument({
           title: title || 'Untitled',
           content: newContent,
-          date: new Date(date).getTime(),
+          startDate: new Date(startDate).getTime(),
+          endDate: new Date(endDate).getTime(),
           status,
         });
         setCurrentDocId(doc.id);
@@ -133,7 +144,7 @@ export function Editor({ documentId }: EditorProps) {
     } else if (currentDocId) {
       triggerAutoSave({ content: newContent });
     }
-  }, [currentDocId, title, date, status, router, showToast, handleContentChange, triggerAutoSave]);
+  }, [currentDocId, title, startDate, endDate, status, router, showToast, handleContentChange, triggerAutoSave]);
 
   const handlePreviewContentChange = useCallback((newContent: string) => {
     setContent(newContent);
@@ -383,11 +394,29 @@ export function Editor({ documentId }: EditorProps) {
     }
   };
 
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newDate = e.target.value;
-    setDate(newDate);
+  const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newStartDate = e.target.value;
+    setStartDate(newStartDate);
+    // If endDate is before startDate, update endDate to match startDate
+    if (new Date(newStartDate) > new Date(endDate)) {
+      setEndDate(newStartDate);
+      if (currentDocId) {
+        triggerAutoSave({ startDate: newStartDate, endDate: newStartDate });
+      }
+    } else if (currentDocId) {
+      triggerAutoSave({ startDate: newStartDate });
+    }
+  };
+
+  const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newEndDate = e.target.value;
+    // Ensure endDate is not before startDate
+    if (new Date(newEndDate) < new Date(startDate)) {
+      return;
+    }
+    setEndDate(newEndDate);
     if (currentDocId) {
-      triggerAutoSave({ date: newDate });
+      triggerAutoSave({ endDate: newEndDate });
     }
   };
 
@@ -468,13 +497,24 @@ export function Editor({ documentId }: EditorProps) {
           value={title}
           onChange={handleTitleChange}
         />
-        <div className="document-meta-item">
+        <div className="document-meta-item date-range-picker">
           <input
-            ref={datePickerRef}
+            ref={startDateRef}
             type="date"
             className="date-picker"
-            value={date}
-            onChange={handleDateChange}
+            value={startDate}
+            onChange={handleStartDateChange}
+            title="시작일"
+          />
+          <span className="date-range-separator">~</span>
+          <input
+            ref={endDateRef}
+            type="date"
+            className="date-picker"
+            value={endDate}
+            onChange={handleEndDateChange}
+            min={startDate}
+            title="종료일"
           />
         </div>
         <div className="document-meta-item">
@@ -519,7 +559,7 @@ export function Editor({ documentId }: EditorProps) {
             onKeyDown={handleKeyDown}
           />
         </div>
-        <MarkdownPreview content={content} title={title} date={date} onContentChange={handlePreviewContentChange} />
+        <MarkdownPreview content={content} title={title} date={startDate} onContentChange={handlePreviewContentChange} />
       </div>
       {showSaveToast && (
         <div className={`save-toast ${saveStatus}`}>

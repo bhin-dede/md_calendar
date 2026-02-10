@@ -18,7 +18,8 @@
 - **Custom Folder** - 저장 폴더 직접 지정 가능
 - **Import/Export** - .md 파일 가져오기/내보내기
 - **Document List** - 문서 목록 관리 및 검색 (페이지네이션 지원)
-- **Calendar View** - 날짜별 문서 시각화 (기본 시작 화면)
+- **Calendar View** - react-big-calendar 기반 캘린더 (기본 시작 화면)
+- **Date Range** - 문서에 시작일~종료일 기간 설정 가능
 - **Memory Optimized** - 메타데이터 기반 로딩으로 메모리 사용량 최적화
 - **Custom Title Bar** - 네오브루탈리즘 스타일 커스텀 타이틀바
 - **Always on Top** - 창 항상 위에 고정 기능 (📌 버튼)
@@ -31,9 +32,9 @@
 
 ### Linux (AppImage)
 
-[![Download AppImage](https://img.shields.io/badge/Download-AppImage-blue?style=for-the-badge&logo=linux)](https://github.com/bhin-dede/md_calendar/releases/latest/download/MD.Calendar_0.8.0_amd64.AppImage)
+[![Download AppImage](https://img.shields.io/badge/Download-AppImage-blue?style=for-the-badge&logo=linux)](https://github.com/bhin-dede/md_calendar/releases/latest/download/MD.Calendar_0.9.0_amd64.AppImage)
 
-**[MD Calendar_0.8.0_amd64.AppImage](https://github.com/bhin-dede/md_calendar/releases/latest/download/MD.Calendar_0.8.0_amd64.AppImage)** (77MB)
+**[MD Calendar_0.9.0_amd64.AppImage](https://github.com/bhin-dede/md_calendar/releases/latest/download/MD.Calendar_0.9.0_amd64.AppImage)** (77MB)
 
 ### 실행 조건
 
@@ -57,10 +58,10 @@ sudo pacman -S webkit2gtk-4.1
 
 ```bash
 # 1. 다운로드 후 실행 권한 부여
-chmod +x MD\ Calendar_0.8.0_amd64.AppImage
+chmod +x MD\ Calendar_0.9.0_amd64.AppImage
 
 # 2. 실행
-./MD\ Calendar_0.8.0_amd64.AppImage
+./MD\ Calendar_0.9.0_amd64.AppImage
 ```
 
 > **Tip**: `~/Applications` 폴더에 복사하면 앱 런처에서도 찾을 수 있습니다.

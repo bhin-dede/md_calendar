@@ -896,8 +896,45 @@
 }
 
 .calendar-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.calendar-week-row {
+  width: 100%;
+}
+
+.calendar-week-row {
+  position: relative;
+}
+
+.calendar-week-bars {
+  position: absolute;
+  top: 28px;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.calendar-week-bars > * {
+  pointer-events: auto;
+}
+
+.calendar-bars-more {
+  position: absolute;
+  right: var(--space-sm);
+  top: 0;
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+}
+
+.calendar-week-grid {
+  position: relative;
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  min-height: 120px;
 }
 
 .calendar-day {
@@ -907,10 +944,65 @@
   border-bottom: 2px solid var(--color-border);
   cursor: pointer;
   transition: background-color var(--transition-fast);
+  position: relative;
+  z-index: 1;
 }
 
-.calendar-day:nth-child(7n) {
+.calendar-week-grid .calendar-day:nth-child(7n) {
   border-right: none;
+}
+
+.calendar-loading {
+  padding: var(--space-lg);
+  text-align: center;
+  width: 100%;
+  font-weight: 600;
+}
+
+.calendar-multi-day-bar {
+  position: absolute;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 0 var(--space-sm);
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--color-text);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  z-index: 2;
+  transition: transform var(--transition-fast);
+}
+
+.calendar-multi-day-bar:hover {
+  transform: translateY(-2px);
+}
+
+.calendar-multi-day-bar.no-start {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.calendar-multi-day-bar.no-end {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.calendar-multi-day-bar .calendar-status-icon {
+  background: rgba(255, 255, 255, 0.9);
+  color: #1a1a1a;
+  width: 16px;
+  height: 16px;
+  font-size: 0.65rem;
+}
+
+.calendar-multi-day-bar .calendar-doc-title {
+  color: inherit;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 
 .calendar-day:hover {
@@ -1038,6 +1130,17 @@
 .date-picker:focus {
   outline: none;
   box-shadow: var(--shadow-brutal);
+}
+
+.date-range-picker {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.date-range-separator {
+  color: var(--color-text-muted);
+  font-weight: 500;
 }
 
 .file-input-wrapper {

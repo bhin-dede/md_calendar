@@ -3,6 +3,7 @@ import { LayoutWrapper } from "@/components/LayoutWrapper";
 import "@/styles/design-system.css";
 import "@/styles/components.css";
 import "@/styles/layout.css";
+import "@/styles/big-calendar.css";
 
 export const metadata: Metadata = {
   title: "MD Calendar",

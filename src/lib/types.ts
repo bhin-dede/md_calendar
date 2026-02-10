@@ -20,7 +20,8 @@ export interface Document {
   id: string;
   title: string;
   content: string;
-  date: number;
+  startDate: number;
+  endDate: number;
   status: DocumentStatus;
   createdAt: number;
   updatedAt: number;
@@ -29,7 +30,8 @@ export interface Document {
 export interface DocumentSummary {
   id: string;
   title: string;
-  date: number;
+  startDate: number;
+  endDate: number;
   status: DocumentStatus;
   createdAt: number;
   updatedAt: number;
@@ -38,7 +40,8 @@ export interface DocumentSummary {
 export interface DocumentInput {
   title?: string;
   content?: string;
-  date?: number;
+  startDate?: number;
+  endDate?: number;
   status?: DocumentStatus;
 }
 

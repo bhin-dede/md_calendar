@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useMemoMode } from '@/context/MemoModeContext';
-import { getAllDocuments, getDocument, updateDocument, createDocument } from '@/lib/db';
+import { getAllDocuments, getDocument, updateDocument, createDocument, formatDateRange } from '@/lib/db';
 import { Document, DocumentStatus, STATUS_LABELS } from '@/lib/types';
 
 const STATUS_ICONS: Record<DocumentStatus, string> = {
@@ -102,7 +102,8 @@ export function MemoView() {
     const doc = await createDocument({
       title: '새 메모',
       content: '- [ ] ',
-      date: Date.now(),
+      startDate: Date.now(),
+      endDate: Date.now(),
       status: 'none',
     });
     setDocuments([doc, ...documents]);
@@ -187,11 +188,11 @@ export function MemoView() {
     if (statusFilter !== 'all' && doc.status !== statusFilter) return false;
     if (dateFrom) {
       const fromDate = new Date(dateFrom).setHours(0, 0, 0, 0);
-      if (doc.date < fromDate) return false;
+      if (doc.endDate < fromDate) return false;
     }
     if (dateTo) {
       const toDate = new Date(dateTo).setHours(23, 59, 59, 999);
-      if (doc.date > toDate) return false;
+      if (doc.startDate > toDate) return false;
     }
     return true;
   });
@@ -248,7 +249,7 @@ export function MemoView() {
                 <span className="memo-doc-title">{doc.title || 'Untitled'}</span>
               </div>
               <span className="memo-doc-date">
-                {new Date(doc.date).toLocaleDateString('ko-KR')}
+                {formatDateRange(doc.startDate, doc.endDate)}
               </span>
             </div>
           ))}

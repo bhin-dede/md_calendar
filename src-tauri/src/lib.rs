@@ -1,3 +1,4 @@
+use chrono::Datelike;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
@@ -67,7 +68,10 @@ pub struct Document {
     pub id: String,
     pub title: String,
     pub content: String,
-    pub date: i64,
+    #[serde(rename = "startDate")]
+    pub start_date: i64,
+    #[serde(rename = "endDate")]
+    pub end_date: i64,
     pub status: String,
     #[serde(rename = "createdAt")]
     pub created_at: i64,
@@ -78,7 +82,10 @@ pub struct Document {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DocumentMeta {
     pub title: String,
-    pub date: i64,
+    #[serde(rename = "startDate")]
+    pub start_date: i64,
+    #[serde(rename = "endDate")]
+    pub end_date: i64,
     #[serde(default = "default_status")]
     pub status: String,
     #[serde(rename = "createdAt")]
@@ -87,11 +94,45 @@ pub struct DocumentMeta {
     pub updated_at: i64,
 }
 
+#[derive(Debug, Deserialize)]
+struct LegacyDocumentMeta {
+    title: String,
+    date: i64,
+    #[serde(default = "default_status")]
+    status: String,
+    #[serde(rename = "createdAt")]
+    created_at: i64,
+    #[serde(rename = "updatedAt")]
+    updated_at: i64,
+}
+
+fn parse_document_meta(json: &str) -> Result<DocumentMeta, String> {
+    if let Ok(meta) = serde_json::from_str::<DocumentMeta>(json) {
+        return Ok(meta);
+    }
+
+    if let Ok(legacy) = serde_json::from_str::<LegacyDocumentMeta>(json) {
+        return Ok(DocumentMeta {
+            title: legacy.title,
+            start_date: legacy.date,
+            end_date: legacy.date,
+            status: legacy.status,
+            created_at: legacy.created_at,
+            updated_at: legacy.updated_at,
+        });
+    }
+
+    Err("Failed to parse document meta".to_string())
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DocumentSummary {
     pub id: String,
     pub title: String,
-    pub date: i64,
+    #[serde(rename = "startDate")]
+    pub start_date: i64,
+    #[serde(rename = "endDate")]
+    pub end_date: i64,
     pub status: String,
     #[serde(rename = "createdAt")]
     pub created_at: i64,
@@ -182,7 +223,8 @@ fn create_document(
     app: tauri::AppHandle,
     title: String,
     content: String,
-    date: i64,
+    start_date: i64,
+    end_date: i64,
     status: Option<String>,
 ) -> Result<Document, String> {
     let now = chrono::Utc::now().timestamp_millis();
@@ -196,7 +238,8 @@ fn create_document(
         id: id.clone(),
         title: title.clone(),
         content: content.clone(),
-        date,
+        start_date,
+        end_date,
         status: doc_status.clone(),
         created_at: now,
         updated_at: now,
@@ -209,7 +252,8 @@ fn create_document(
 
     let meta = DocumentMeta {
         title,
-        date,
+        start_date,
+        end_date,
         status: doc_status,
         created_at: now,
         updated_at: now,
@@ -231,13 +275,14 @@ fn get_document(app: tauri::AppHandle, id: String) -> Result<Option<Document>, S
 
     let content = fs::read_to_string(&doc_path).map_err(|e| e.to_string())?;
     let meta_json = fs::read_to_string(&meta_path).map_err(|e| e.to_string())?;
-    let meta: DocumentMeta = serde_json::from_str(&meta_json).map_err(|e| e.to_string())?;
+    let meta = parse_document_meta(&meta_json)?;
 
     Ok(Some(Document {
         id,
         title: meta.title,
         content,
-        date: meta.date,
+        start_date: meta.start_date,
+        end_date: meta.end_date,
         status: meta.status,
         created_at: meta.created_at,
         updated_at: meta.updated_at,
@@ -250,7 +295,8 @@ fn update_document(
     id: String,
     title: Option<String>,
     content: Option<String>,
-    date: Option<i64>,
+    start_date: Option<i64>,
+    end_date: Option<i64>,
     status: Option<String>,
 ) -> Result<Document, String> {
     let doc_path = get_document_path(&app, &id)?;
@@ -262,7 +308,7 @@ fn update_document(
 
     let current_content = fs::read_to_string(&doc_path).map_err(|e| e.to_string())?;
     let meta_json = fs::read_to_string(&meta_path).map_err(|e| e.to_string())?;
-    let mut meta: DocumentMeta = serde_json::from_str(&meta_json).map_err(|e| e.to_string())?;
+    let mut meta = parse_document_meta(&meta_json)?;
 
     let now = chrono::Utc::now().timestamp_millis();
     let new_content = content.unwrap_or(current_content);
@@ -270,8 +316,11 @@ fn update_document(
     let title_changed = title.as_ref().map_or(false, |t| t != &meta.title);
     let new_title = title.unwrap_or_else(|| meta.title.clone());
 
-    if let Some(d) = date {
-        meta.date = d;
+    if let Some(d) = start_date {
+        meta.start_date = d;
+    }
+    if let Some(d) = end_date {
+        meta.end_date = d;
     }
     if let Some(s) = status {
         meta.status = s;
@@ -313,7 +362,8 @@ fn update_document(
         id: new_id,
         title: meta.title,
         content: new_content,
-        date: meta.date,
+        start_date: meta.start_date,
+        end_date: meta.end_date,
         status: meta.status,
         created_at: meta.created_at,
         updated_at: meta.updated_at,
@@ -390,11 +440,12 @@ fn get_all_document_summaries(app: tauri::AppHandle) -> Result<Vec<DocumentSumma
                 .to_string();
 
             let meta_json = fs::read_to_string(&path).map_err(|e| e.to_string())?;
-            if let Ok(meta) = serde_json::from_str::<DocumentMeta>(&meta_json) {
+            if let Ok(meta) = parse_document_meta(&meta_json) {
                 summaries.push(DocumentSummary {
                     id,
                     title: meta.title,
-                    date: meta.date,
+                    start_date: meta.start_date,
+                    end_date: meta.end_date,
                     status: meta.status,
                     created_at: meta.created_at,
                     updated_at: meta.updated_at,
@@ -416,17 +467,29 @@ fn get_document_summaries_for_month(
 ) -> Result<Vec<DocumentSummary>, String> {
     let all_summaries = get_all_document_summaries(app)?;
 
+    // 해당 월의 시작과 끝 타임스탬프 계산
+    let month_start = chrono::NaiveDate::from_ymd_opt(year, month, 1)
+        .map(|d| d.and_hms_opt(0, 0, 0).unwrap().and_utc().timestamp_millis())
+        .unwrap_or(0);
+    let days_in_month = chrono::NaiveDate::from_ymd_opt(year, month + 1, 1)
+        .or_else(|| chrono::NaiveDate::from_ymd_opt(year + 1, 1, 1))
+        .and_then(|d| d.pred_opt())
+        .map(|d| d.day())
+        .unwrap_or(31);
+    let month_end = chrono::NaiveDate::from_ymd_opt(year, month, days_in_month)
+        .map(|d| {
+            d.and_hms_opt(23, 59, 59)
+                .unwrap()
+                .and_utc()
+                .timestamp_millis()
+        })
+        .unwrap_or(i64::MAX);
+
     let filtered: Vec<DocumentSummary> = all_summaries
         .into_iter()
         .filter(|doc| {
-            let date = chrono::DateTime::from_timestamp_millis(doc.date);
-            if let Some(dt) = date {
-                let dt = dt.with_timezone(&chrono::Utc);
-                dt.format("%Y").to_string().parse::<i32>().unwrap_or(0) == year
-                    && dt.format("%m").to_string().parse::<u32>().unwrap_or(0) == month
-            } else {
-                false
-            }
+            // 문서 기간이 해당 월과 겹치는지 확인
+            doc.start_date <= month_end && doc.end_date >= month_start
         })
         .collect();
 
@@ -441,18 +504,27 @@ fn get_documents_for_month(
 ) -> Result<Vec<Document>, String> {
     let all_docs = get_all_documents(app)?;
 
+    // 해당 월의 시작과 끝 타임스탬프 계산
+    let month_start = chrono::NaiveDate::from_ymd_opt(year, month, 1)
+        .map(|d| d.and_hms_opt(0, 0, 0).unwrap().and_utc().timestamp_millis())
+        .unwrap_or(0);
+    let days_in_month = chrono::NaiveDate::from_ymd_opt(year, month + 1, 1)
+        .or_else(|| chrono::NaiveDate::from_ymd_opt(year + 1, 1, 1))
+        .and_then(|d| d.pred_opt())
+        .map(|d| d.day())
+        .unwrap_or(31);
+    let month_end = chrono::NaiveDate::from_ymd_opt(year, month, days_in_month)
+        .map(|d| {
+            d.and_hms_opt(23, 59, 59)
+                .unwrap()
+                .and_utc()
+                .timestamp_millis()
+        })
+        .unwrap_or(i64::MAX);
+
     let filtered: Vec<Document> = all_docs
         .into_iter()
-        .filter(|doc| {
-            let date = chrono::DateTime::from_timestamp_millis(doc.date);
-            if let Some(dt) = date {
-                let dt = dt.with_timezone(&chrono::Utc);
-                dt.format("%Y").to_string().parse::<i32>().unwrap_or(0) == year
-                    && dt.format("%m").to_string().parse::<u32>().unwrap_or(0) == month
-            } else {
-                false
-            }
-        })
+        .filter(|doc| doc.start_date <= month_end && doc.end_date >= month_start)
         .collect();
 
     Ok(filtered)

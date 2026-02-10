@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, memo } from 'react';
+import React, { useState, useEffect, useCallback, memo, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { DocumentSummary, DocumentStatus, STATUS_COLORS } from '@/lib/types';
@@ -37,16 +37,140 @@ function isToday(year: number, month: number, day: number): boolean {
     today.getDate() === day;
 }
 
-function groupDocumentsByDate(docs: DocumentSummary[]): Record<string, DocumentSummary[]> {
-  const grouped: Record<string, DocumentSummary[]> = {};
-  docs.forEach(doc => {
-    const key = getDateKey(doc.date);
-    if (!grouped[key]) {
-      grouped[key] = [];
+function getNextStatus(status: DocumentStatus): DocumentStatus {
+  if (status === 'none') return 'ready';
+  const currentIndex = STATUS_CYCLE.indexOf(status);
+  if (currentIndex === -1) return 'ready';
+  const nextIndex = (currentIndex + 1) % STATUS_CYCLE.length;
+  return STATUS_CYCLE[nextIndex];
+}
+
+
+
+type WeekDayCell = {
+  year: number;
+  month: number;
+  day: number;
+  isOtherMonth: boolean;
+  dateKey: string;
+};
+
+type WeekRow = {
+  weekIndex: number;
+  days: WeekDayCell[];
+};
+
+function buildWeekRows(year: number, month: number): WeekRow[] {
+  const daysInMonth = getDaysInMonth(year, month);
+  const firstDay = getFirstDayOfMonth(year, month);
+  const prevPadding = firstDay;
+  const remainder = (firstDay + daysInMonth) % 7;
+  const nextPadding = remainder === 0 ? 0 : 7 - remainder;
+  const totalDisplayDays = prevPadding + daysInMonth + nextPadding;
+
+  const startDate = new Date(year, month, 1 - prevPadding);
+  const weeks: WeekRow[] = [];
+
+  for (let i = 0; i < totalDisplayDays; i++) {
+    const current = new Date(startDate);
+    current.setDate(startDate.getDate() + i);
+    const day = current.getDate();
+    const cellYear = current.getFullYear();
+    const cellMonth = current.getMonth();
+    const isOtherMonth = cellMonth !== month || cellYear !== year;
+    const dateKey = `${cellYear}-${String(cellMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+    const weekIndex = Math.floor(i / 7);
+    if (!weeks[weekIndex]) {
+      weeks[weekIndex] = { weekIndex, days: [] };
     }
-    grouped[key].push(doc);
+    weeks[weekIndex].days.push({
+      year: cellYear,
+      month: cellMonth,
+      day,
+      isOtherMonth,
+      dateKey,
+    });
+  }
+
+  return weeks;
+}
+
+interface MultiDaySegment {
+  doc: DocumentSummary;
+  weekIndex: number;
+  startColumn: number;
+  span: number;
+  isStart: boolean;
+  isEnd: boolean;
+}
+
+function buildDocumentSegments(docs: DocumentSummary[], weeks: WeekRow[]): Record<number, MultiDaySegment[]> {
+  const segments: Record<number, MultiDaySegment[]> = {};
+  
+  const docRanges = docs.map(doc => ({
+    doc,
+    startKey: getDateKey(doc.startDate),
+    endKey: getDateKey(doc.endDate),
+  }));
+
+  weeks.forEach(week => {
+    const weekDateKeys = week.days.map(day => day.dateKey);
+    const firstDateKey = weekDateKeys[0];
+    const lastDateKey = weekDateKeys[weekDateKeys.length - 1];
+
+    docRanges.forEach(({ doc, startKey, endKey }) => {
+      if (endKey < firstDateKey || startKey > lastDateKey) {
+        return;
+      }
+
+      let startColumn = -1;
+      let endColumn = -1;
+
+      for (let i = 0; i < weekDateKeys.length; i++) {
+        const dateKey = weekDateKeys[i];
+        if (dateKey >= startKey && dateKey <= endKey) {
+          startColumn = i + 1;
+          break;
+        }
+      }
+
+      for (let i = weekDateKeys.length - 1; i >= 0; i--) {
+        const dateKey = weekDateKeys[i];
+        if (dateKey >= startKey && dateKey <= endKey) {
+          endColumn = i + 1;
+          break;
+        }
+      }
+
+      if (startColumn === -1 || endColumn === -1) return;
+
+      const span = endColumn - startColumn + 1;
+      if (span <= 0) return;
+
+      const isStart = startKey >= firstDateKey && startKey <= lastDateKey;
+      const isEnd = endKey >= firstDateKey && endKey <= lastDateKey;
+
+      if (!segments[week.weekIndex]) {
+        segments[week.weekIndex] = [];
+      }
+
+      segments[week.weekIndex].push({
+        doc,
+        weekIndex: week.weekIndex,
+        startColumn,
+        span,
+        isStart,
+        isEnd,
+      });
+    });
   });
-  return grouped;
+
+  Object.values(segments).forEach(array => {
+    array.sort((a, b) => a.startColumn - b.startColumn);
+  });
+
+  return segments;
 }
 
 interface CalendarDayProps {
@@ -54,11 +178,9 @@ interface CalendarDayProps {
   month: number;
   day: number;
   isOtherMonth: boolean;
-  docs: DocumentSummary[];
-  onStatusChange: (docId: string, newStatus: DocumentStatus) => void;
 }
 
-const CalendarDay = memo(function CalendarDay({ year, month, day, isOtherMonth, docs, onStatusChange }: CalendarDayProps) {
+const CalendarDay = memo(function CalendarDay({ year, month, day, isOtherMonth }: CalendarDayProps) {
   const router = useRouter();
   const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
@@ -66,7 +188,6 @@ const CalendarDay = memo(function CalendarDay({ year, month, day, isOtherMonth, 
     'calendar-day',
     isOtherMonth && 'other-month',
     !isOtherMonth && isToday(year, month, day) && 'today',
-    docs.length > 0 && 'has-docs',
   ].filter(Boolean).join(' ');
 
   const handleDayClick = () => {
@@ -75,73 +196,89 @@ const CalendarDay = memo(function CalendarDay({ year, month, day, isOtherMonth, 
     }
   };
 
-  const handleDocClick = (e: React.MouseEvent, docId: string) => {
-    e.stopPropagation();
-    router.push(`/editor?id=${docId}`);
-  };
-
-  const handleStatusClick = (e: React.MouseEvent, doc: DocumentSummary) => {
-    e.stopPropagation();
-    const currentStatus = doc.status || 'none';
-    let nextStatus: DocumentStatus;
-    if (currentStatus === 'none') {
-      nextStatus = 'ready';
-    } else {
-      const currentIndex = STATUS_CYCLE.indexOf(currentStatus);
-      const nextIndex = (currentIndex + 1) % STATUS_CYCLE.length;
-      nextStatus = STATUS_CYCLE[nextIndex];
-    }
-    onStatusChange(doc.id, nextStatus);
-  };
-
   return (
     <div className={classNames} onClick={handleDayClick} style={{ cursor: isOtherMonth ? 'default' : 'pointer' }}>
       <div className="calendar-day-number">{day}</div>
-      {docs.length > 0 && (
-        <div className="calendar-day-docs">
-          {docs.slice(0, 3).map(doc => (
-            <div
-              key={doc.id}
-              className="calendar-doc-item"
-              title={doc.title || 'Untitled'}
-              style={{ backgroundColor: STATUS_COLORS[doc.status] }}
-            >
-              <span 
-                className="calendar-status-icon"
-                onClick={(e) => handleStatusClick(e, doc)}
-                title="상태 변경"
-              >
-                {STATUS_ICONS[doc.status || 'none']}
-              </span>
-              <span className="calendar-doc-title" onClick={(e) => handleDocClick(e, doc.id)}>
-                {doc.title || 'Untitled'}
-              </span>
-            </div>
-          ))}
-          {docs.length > 3 && (
-            <div className="calendar-more">+{docs.length - 3} more</div>
-          )}
-        </div>
-      )}
     </div>
   );
 });
 
+interface CalendarMultiDayBarProps {
+  doc: DocumentSummary;
+  startColumn: number;
+  span: number;
+  isStart: boolean;
+  isEnd: boolean;
+  lane: number;
+  onStatusChange: (docId: string, newStatus: DocumentStatus) => void;
+}
+
+const BAR_HEIGHT = 24;
+const BAR_GAP = 4;
+const BAR_OFFSET = 2;
+
+function CalendarMultiDayBar({ doc, startColumn, span, isStart, isEnd, lane, onStatusChange }: CalendarMultiDayBarProps) {
+  const router = useRouter();
+  const columnWidth = 100 / 7;
+  const leftPercent = (startColumn - 1) * columnWidth;
+  const widthPercent = span * columnWidth;
+  const topOffset = BAR_OFFSET + lane * (BAR_HEIGHT + BAR_GAP);
+  const backgroundColor = STATUS_COLORS[doc.status || 'none'];
+
+  const handleClick = () => {
+    router.push(`/editor?id=${doc.id}`);
+  };
+
+  const handleStatusClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const currentStatus = doc.status || 'none';
+    onStatusChange(doc.id, getNextStatus(currentStatus));
+  };
+
+  const classNames = [
+    'calendar-multi-day-bar',
+    isStart ? 'start' : 'no-start',
+    isEnd ? 'end' : 'no-end',
+  ].join(' ');
+
+  return (
+    <div
+      className={classNames}
+      style={{
+        left: `${leftPercent}%`,
+        width: `${widthPercent}%`,
+        top: `${topOffset}px`,
+        backgroundColor,
+      }}
+      title={doc.title || 'Untitled'}
+      onClick={handleClick}
+    >
+      <span className="calendar-status-icon" onClick={handleStatusClick} title="상태 변경">
+        {STATUS_ICONS[doc.status || 'none']}
+      </span>
+      <span className="calendar-doc-title">
+        {doc.title || 'Untitled'}
+      </span>
+    </div>
+  );
+}
+
 export function Calendar() {
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
-  const [docsByDate, setDocsByDate] = useState<Record<string, DocumentSummary[]>>({});
+  const [allDocs, setAllDocs] = useState<DocumentSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const loadDocuments = useCallback(async () => {
     setIsLoading(true);
     try {
       const docs = await getDocumentSummariesForMonth(currentYear, currentMonth);
-      setDocsByDate(groupDocumentsByDate(docs));
+      setAllDocs(docs);
     } catch (error) {
       console.error('Failed to load documents:', error);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, [currentYear, currentMonth]);
 
   useEffect(() => {
@@ -150,15 +287,9 @@ export function Calendar() {
 
   const handleStatusChange = async (docId: string, newStatus: DocumentStatus) => {
     await updateDocument(docId, { status: newStatus });
-    setDocsByDate(prev => {
-      const updated = { ...prev };
-      for (const key in updated) {
-        updated[key] = updated[key].map(doc =>
-          doc.id === docId ? { ...doc, status: newStatus } : doc
-        );
-      }
-      return updated;
-    });
+    setAllDocs(prev => prev.map(doc =>
+      doc.id === docId ? { ...doc, status: newStatus } : doc
+    ));
   };
 
   const navigateMonth = (delta: number) => {
@@ -182,68 +313,11 @@ export function Calendar() {
     setCurrentMonth(new Date().getMonth());
   };
 
-  const renderCalendarGrid = () => {
-    const days: React.ReactNode[] = [];
-    const daysInMonth = getDaysInMonth(currentYear, currentMonth);
-    const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
-
-    const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-    const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
-    const daysInPrevMonth = getDaysInMonth(prevYear, prevMonth);
-
-    for (let i = firstDay - 1; i >= 0; i--) {
-      const day = daysInPrevMonth - i;
-      const dateKey = `${prevYear}-${String(prevMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      days.push(
-        <CalendarDay
-          key={`prev-${day}`}
-          year={prevYear}
-          month={prevMonth}
-          day={day}
-          isOtherMonth={true}
-          docs={docsByDate[dateKey] || []}
-          onStatusChange={handleStatusChange}
-        />
-      );
-    }
-
-    for (let day = 1; day <= daysInMonth; day++) {
-      const dateKey = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      days.push(
-        <CalendarDay
-          key={`current-${day}`}
-          year={currentYear}
-          month={currentMonth}
-          day={day}
-          isOtherMonth={false}
-          docs={docsByDate[dateKey] || []}
-          onStatusChange={handleStatusChange}
-        />
-      );
-    }
-
-    const totalCells = firstDay + daysInMonth;
-    const remainingCells = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
-    const nextMonth = currentMonth === 11 ? 0 : currentMonth + 1;
-    const nextYear = currentMonth === 11 ? currentYear + 1 : currentYear;
-
-    for (let day = 1; day <= remainingCells; day++) {
-      const dateKey = `${nextYear}-${String(nextMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      days.push(
-        <CalendarDay
-          key={`next-${day}`}
-          year={nextYear}
-          month={nextMonth}
-          day={day}
-          isOtherMonth={true}
-          docs={docsByDate[dateKey] || []}
-          onStatusChange={handleStatusChange}
-        />
-      );
-    }
-
-    return days;
-  };
+  const weekRows = useMemo(() => buildWeekRows(currentYear, currentMonth), [currentYear, currentMonth]);
+  const segmentsByWeek = useMemo(
+    () => buildDocumentSegments(allDocs, weekRows),
+    [allDocs, weekRows]
+  );
 
   return (
     <div className="app-container view-calendar">
@@ -295,9 +369,44 @@ export function Calendar() {
 
         <div className="calendar-grid">
           {isLoading ? (
-            <div className="loading" style={{ gridColumn: '1 / -1' }}>Loading...</div>
+            <div className="calendar-loading">Loading...</div>
           ) : (
-            renderCalendarGrid()
+            weekRows.map(week => {
+              const weekBars = segmentsByWeek[week.weekIndex] || [];
+              const barAreaHeight = weekBars.length > 0 ? weekBars.length * (BAR_HEIGHT + BAR_GAP) + 4 : 0;
+              
+              return (
+                <div key={`week-${week.weekIndex}`} className="calendar-week-row">
+                  <div className="calendar-week-grid">
+                    {week.days.map(day => (
+                      <CalendarDay
+                        key={day.dateKey}
+                        year={day.year}
+                        month={day.month}
+                        day={day.day}
+                        isOtherMonth={day.isOtherMonth}
+                      />
+                    ))}
+                  </div>
+                  {weekBars.length > 0 && (
+                    <div className="calendar-week-bars" style={{ height: `${barAreaHeight}px` }}>
+                      {weekBars.map((segment: MultiDaySegment, laneIndex: number) => (
+                        <CalendarMultiDayBar
+                          key={`${segment.doc.id}-${week.weekIndex}-${laneIndex}`}
+                          doc={segment.doc}
+                          startColumn={segment.startColumn}
+                          span={segment.span}
+                          isStart={segment.isStart}
+                          isEnd={segment.isEnd}
+                          lane={laneIndex}
+                          onStatusChange={handleStatusChange}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })
           )}
         </div>
       </div>

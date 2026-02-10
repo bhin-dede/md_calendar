@@ -7,7 +7,7 @@ import { DocumentCard } from './DocumentCard';
 import { ConfirmModal } from '@/components/Modal';
 import { useToast } from '@/context/ToastContext';
 import { DocumentSummary, DocumentStatus, STATUS_LABELS, STATUS_COLORS } from '@/lib/types';
-import { getAllDocumentSummaries, searchDocumentSummaries, deleteDocument, createDocument, formatDate, getDocument } from '@/lib/db';
+import { getAllDocumentSummaries, searchDocumentSummaries, deleteDocument, createDocument, formatDate, formatDateRange, getDocument } from '@/lib/db';
 
 type ViewMode = 'grid' | 'table';
 type SortField = 'title' | 'date' | 'status' | 'updatedAt' | 'createdAt';
@@ -66,8 +66,8 @@ export function DocumentList() {
           bVal = b.title.toLowerCase();
           break;
         case 'date':
-          aVal = a.date;
-          bVal = b.date;
+          aVal = a.startDate;
+          bVal = b.startDate;
           break;
         case 'status':
           aVal = a.status || 'none';
@@ -164,7 +164,8 @@ export function DocumentList() {
         await createDocument({
           title: filename,
           content,
-          date: Date.now(),
+          startDate: Date.now(),
+          endDate: Date.now(),
         });
 
         imported++;
@@ -229,7 +230,7 @@ export function DocumentList() {
                   </span>
                 )}
               </td>
-              <td>{formatDate(doc.date)}</td>
+              <td>{formatDateRange(doc.startDate, doc.endDate)}</td>
               <td>{formatDate(doc.updatedAt)}</td>
               <td>{formatDate(doc.createdAt)}</td>
               <td className="actions-cell" onClick={(e) => e.stopPropagation()}>

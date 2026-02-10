@@ -9,7 +9,8 @@ export async function createDocument(data: DocumentInput = {}): Promise<Document
   return invoke<Document>('create_document', {
     title: data.title || 'Untitled',
     content: data.content || '',
-    date: data.date || now,
+    startDate: data.startDate || now,
+    endDate: data.endDate || data.startDate || now,
     status: data.status || 'none',
   });
 }
@@ -24,7 +25,8 @@ export async function updateDocument(id: string, updates: Partial<DocumentInput>
     id,
     title: updates.title ?? null,
     content: updates.content ?? null,
-    date: updates.date ?? null,
+    startDate: updates.startDate ?? null,
+    endDate: updates.endDate ?? null,
     status: updates.status ?? null,
   });
 }
@@ -74,6 +76,19 @@ export function formatDate(timestamp: number): string {
   });
 }
 
+export function formatDateRange(startDate: number, endDate: number): string {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  
+  if (start.toDateString() === end.toDateString()) {
+    return formatDate(startDate);
+  }
+  
+  const startStr = start.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
+  const endStr = end.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
+  return `${startStr} - ${endStr}`;
+}
+
 export function formatDateTime(timestamp: number): string {
   const date = new Date(timestamp);
   return date.toLocaleString('ko-KR', {
@@ -88,4 +103,20 @@ export function formatDateTime(timestamp: number): string {
 export function getDateKey(timestamp: number): string {
   const date = new Date(timestamp);
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+export function getDatesBetween(startDate: number, endDate: number): string[] {
+  const dates: string[] = [];
+  const current = new Date(startDate);
+  const end = new Date(endDate);
+  
+  current.setHours(0, 0, 0, 0);
+  end.setHours(0, 0, 0, 0);
+  
+  while (current <= end) {
+    dates.push(getDateKey(current.getTime()));
+    current.setDate(current.getDate() + 1);
+  }
+  
+  return dates;
 }

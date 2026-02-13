@@ -30,18 +30,16 @@
 
 ## Download
 
-### Linux (AppImage)
+[최신 릴리즈 다운로드](https://github.com/bhin-dede/md_calendar/releases/latest)
 
-[![Download AppImage](https://img.shields.io/badge/Download-AppImage-blue?style=for-the-badge&logo=linux)](https://github.com/bhin-dede/md_calendar/releases/latest/download/MD.Calendar_0.9.0_amd64.AppImage)
+| 플랫폼 | 다운로드 |
+|--------|----------|
+| Linux | `.AppImage` |
+| macOS (Apple Silicon) | `.dmg` (aarch64) |
+| macOS (Intel) | `.dmg` (x86_64) |
+| Windows | `.msi` / `.exe` |
 
-**[MD Calendar_0.9.0_amd64.AppImage](https://github.com/bhin-dede/md_calendar/releases/latest/download/MD.Calendar_0.9.0_amd64.AppImage)** (77MB)
-
-### 실행 조건
-
-| 조건 | 설명 |
-|------|------|
-| OS | Linux (x86_64) |
-| 필수 라이브러리 | libwebkit2gtk-4.1-0 |
+### Linux 실행 조건
 
 ```bash
 # Ubuntu/Debian - 필수 라이브러리 설치
@@ -54,14 +52,14 @@ sudo dnf install webkit2gtk4.1
 sudo pacman -S webkit2gtk-4.1
 ```
 
-### 설치 및 실행
+### Linux 설치 및 실행
 
 ```bash
 # 1. 다운로드 후 실행 권한 부여
-chmod +x MD\ Calendar_0.9.0_amd64.AppImage
+chmod +x MD.Calendar_*_amd64.AppImage
 
 # 2. 실행
-./MD\ Calendar_0.9.0_amd64.AppImage
+./MD.Calendar_*_amd64.AppImage
 ```
 
 > **Tip**: `~/Applications` 폴더에 복사하면 앱 런처에서도 찾을 수 있습니다.

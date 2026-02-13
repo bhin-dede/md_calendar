@@ -223,7 +223,7 @@ export function BigCalendar() {
             events={events}
             startAccessor="start"
             endAccessor="end"
-            style={{ height: 'auto' }}
+            style={{ height: '100%' }}
             view={view}
             onView={handleViewChange}
             views={['month', 'week', 'day', 'agenda']}
@@ -236,6 +236,11 @@ export function BigCalendar() {
             components={components}
             popup
             showMultiDayTimes={false}
+            length={30}
+            messages={{
+              noEventsInRange: '이 기간에 문서가 없습니다.',
+              showMore: (total: number) => `+${total}개 더보기`,
+            }}
           />
         )}
       </div>

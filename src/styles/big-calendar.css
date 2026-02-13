@@ -21,6 +21,8 @@ button.rbc-input::-moz-focus-inner {
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  height: calc(100vh - 200px);
+  max-height: calc(100vh - 200px);
 }
 .rbc-calendar *,
 .rbc-calendar *:before,
@@ -87,7 +89,10 @@ button.rbc-input::-moz-focus-inner {
   z-index: 4;
 }
 .rbc-today {
-  background-color: var(--color-accent);
+  background-color: #FFE66D !important;
+}
+.rbc-day-bg.rbc-today {
+  background-color: #FFE66D !important;
 }
 .rbc-toolbar {
   display: flex;
@@ -187,10 +192,11 @@ button.rbc-input::-moz-focus-inner {
   border: var(--border-style);
   display: flex;
   flex-direction: column;
+  flex: 1;
   width: 100%;
   user-select: none;
   border-radius: var(--radius-md);
-  overflow: hidden;
+  overflow: auto;
 }
 .rbc-month-header {
   display: flex;
@@ -200,8 +206,8 @@ button.rbc-input::-moz-focus-inner {
   display: flex;
   position: relative;
   flex-direction: column;
-  min-height: 100px;
-  overflow: hidden;
+  min-height: 120px;
+  overflow: visible;
 }
 .rbc-month-row + .rbc-month-row {
   border-top: var(--border-style);
@@ -298,8 +304,7 @@ button.rbc-input::-moz-focus-inner {
   width: 100%;
   border: var(--border-style);
   border-radius: var(--radius-md);
-  overflow: hidden;
-  min-height: 500px;
+  overflow: auto;
 }
 .rbc-time-header {
   display: flex;
@@ -316,6 +321,13 @@ button.rbc-input::-moz-focus-inner {
   flex-direction: column;
   border-left: var(--border-style);
 }
+.rbc-time-header-content > .rbc-row {
+  display: flex;
+  flex-direction: row;
+}
+.rbc-time-header-content > .rbc-row > * {
+  flex: 1;
+}
 .rbc-time-header-content > .rbc-row.rbc-row-resource {
   border-bottom: var(--border-style);
 }
@@ -326,6 +338,14 @@ button.rbc-input::-moz-focus-inner {
   display: flex;
   flex-direction: column;
   min-height: 40px;
+  flex: 1;
+}
+.rbc-row.rbc-time-header-cell {
+  flex-direction: row;
+}
+.rbc-row.rbc-time-header-cell .rbc-header {
+  flex: 1;
+  border-bottom: none;
 }
 .rbc-header-gutter {
   width: 70px;
@@ -460,10 +480,11 @@ button.rbc-input::-moz-focus-inner {
 .rbc-agenda-view {
   display: flex;
   flex-direction: column;
-  flex: 1 0 0;
+  flex: 1;
   overflow: auto;
   border: var(--border-style);
   border-radius: var(--radius-md);
+  background-color: var(--color-surface);
 }
 .rbc-agenda-view table.rbc-agenda-table {
   width: 100%;
@@ -498,9 +519,13 @@ button.rbc-input::-moz-focus-inner {
   width: 100%;
 }
 .rbc-agenda-empty {
-  padding: 20px;
+  padding: 40px 20px;
   text-align: center;
   color: var(--color-text-muted);
+  font-size: 1rem;
+}
+.rbc-agenda-content {
+  background-color: var(--color-surface);
 }
 
 /* Custom event content layout */

@@ -55,7 +55,21 @@ jobs:
         with:
           tagName: ${{ github.ref_name }}
           releaseName: ${{ github.ref_name }}
-          releaseBody: 'See the assets to download this version and install.'
+          releaseBody: |
+            ## Download
+
+            | OS | 파일 | 비고 |
+            |----|------|------|
+            | **Linux** | `.AppImage` | 실행 권한 필요: `chmod +x *.AppImage` |
+            | **macOS (M1/M2/M3)** | `_aarch64.dmg` | Apple Silicon |
+            | **macOS (Intel)** | `_x64.dmg` | Intel 프로세서 |
+            | **Windows** | `.msi` 또는 `.exe` | |
+
+            ### Linux 필수 라이브러리
+            ```bash
+            # Ubuntu/Debian
+            sudo apt install libwebkit2gtk-4.1-0
+            ```
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
